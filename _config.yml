@@ -1,0 +1,18 @@
+# The GitHub Pages site at hmoog.github.io/daglight: the README, rendered dark by _layouts/default.html,
+# next to the player at visualisation/player/.
+title: DAGLight
+description: An incremental, adaptive colouring engine for GHOSTDAG protocols that learns from each block's past light cone.
+url: https://hmoog.github.io
+baseurl: /daglight
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+exclude:
+  - Cargo.toml
+  - Cargo.lock
+  - protocol
+  - simulation
+  - visualisation/recorder
+  - docs/figures.py
+  - docs/logo.py

@@ -31,7 +31,11 @@ blocks are blue, and how much of their work it is credited with. Hence the name:
 DAGKnight, whose `k` is a perception rather than a parameter.
 
 This repository implements the engine in Rust, with a simulator that measures it honestly and under
-attack, and a browser player for recorded runs.
+attack, and a browser player for recorded runs, live at
+[hmoog.github.io/daglight/visualisation/player](https://hmoog.github.io/daglight/visualisation/player/):
+blocks attach, their work flows down the chains, the node folds the rest, and the folding threshold,
+the finality point and the pruning point move up the chain, in honest runs and under attack. Every
+frame is a real run, and nothing needs building to watch one.
 
 ## A block's perception
 
@@ -394,3 +398,7 @@ visualisation/player/build.sh --open            # record the replays and open th
 python3 docs/figures.py                         # redraw the figures above
 python3 docs/logo.py                            # redraw the logo
 ```
+
+The player with the recorded replays is published at
+<https://hmoog.github.io/daglight/visualisation/player/>; `build.sh` records fresh replays from the
+current code and opens them locally.

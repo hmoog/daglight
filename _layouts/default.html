@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>{{ page.title | default: site.title }}</title>
+<meta name="description" content="{{ site.description }}">
+<meta property="og:title" content="{{ page.title | default: site.title }}">
+<meta property="og:description" content="{{ site.description }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #0d1514; --surface: #142120; --ink: #e2ece9; --muted: #8ea29e; --rule: #243432;
+  --cyan: #6fe0ea; --glow: #f2a53b; --blue: #6f9dff; --red: #ff6e64; --violet: #c08af2;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body);
+  font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(111, 224, 234, 0.35); }
+a:hover { color: var(--glow); border-bottom-color: var(--glow); }
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 16px; }
+header.site { padding: 36px 0 8px; }
+header.site .logo { display: block; width: min(100%, 620px); height: auto; margin-left: -18px; }
+header.site nav { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px; }
+header.site nav a {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); border-bottom: none;
+}
+header.site nav a:hover { color: var(--glow); }
+header.site nav a.live::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--cyan); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 10px var(--cyan);
+}
+main { padding: 8px 0 72px; }
+main > p:first-child { font-size: 19px; line-height: 1.45; color: var(--ink); margin-top: 18px; }
+main > p:first-child strong { font-weight: 500; }
+h2 {
+  font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1.15;
+  letter-spacing: -0.01em; margin: 56px 0 14px; padding-top: 22px; border-top: 1px solid var(--rule);
+}
+h3 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 32px 0 8px; }
+p { margin: 0 0 16px; }
+strong { color: #fff; font-weight: 600; }
+code {
+  font-family: var(--mono); font-size: 0.86em; background: var(--surface); color: var(--cyan);
+  padding: 0.12em 0.4em; border-radius: 5px;
+}
+pre {
+  margin: 20px 0; padding: 16px 18px; background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 10px; overflow-x: auto; line-height: 1.5;
+}
+pre code { background: none; color: var(--ink); padding: 0; font-size: 13.5px; }
+main img {
+  display: block; max-width: 100%; height: auto; margin: 24px auto; border-radius: 10px;
+  background: #fff; padding: 10px; border: 1px solid var(--rule);
+}
+ul, ol { padding-left: 24px; }
+li { margin-bottom: 6px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 40px 0; }
+blockquote { margin: 0 0 16px; padding: 4px 18px; border-left: 3px solid var(--rule); color: var(--muted); }
+table { border-collapse: collapse; margin: 20px 0; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--rule); padding: 8px 12px; text-align: left; }
+th { background: var(--surface); font-weight: 600; }
+footer.site {
+  border-top: 1px solid var(--rule); padding: 22px 0 48px; color: var(--muted);
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+}
+footer.site a { color: var(--muted); border-bottom-color: var(--rule); }
+footer.site a:hover { color: var(--glow); }
+/* Rouge, on the dark ground. */
+.highlight .c, .highlight .c1, .highlight .cm, .highlight .cp { color: var(--muted); font-style: italic; }
+.highlight .k, .highlight .kd, .highlight .kr, .highlight .kn, .highlight .kp { color: var(--violet); }
+.highlight .kt, .highlight .nc, .highlight .nn { color: var(--blue); }
+.highlight .s, .highlight .s1, .highlight .s2, .highlight .sc { color: var(--cyan); }
+.highlight .mi, .highlight .mf, .highlight .mh, .highlight .m { color: var(--glow); }
+.highlight .nf, .highlight .fm, .highlight .na { color: var(--ink); }
+.highlight .o, .highlight .p, .highlight .nb { color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="site wrap">
+  <a href="{{ '/' | relative_url }}" style="border:none"><img class="logo" src="{{ '/docs/logo.svg' | relative_url }}" alt="DAGLight" width="860" height="270"></a>
+  <nav>
+    <a class="live" href="{{ '/visualisation/player/' | relative_url }}">Watch the player</a>
+    <a href="https://github.com/hmoog/daglight">Source on GitHub</a>
+    <a href="https://github.com/hmoog/daglight/blob/main/simulation/metrics/tests/table.rs">The measured table</a>
+  </nav>
+</header>
+<main class="wrap">
+{{ content }}
+</main>
+<footer class="site wrap">
+  MIT licence · this page is the repository's README, rendered by GitHub Pages ·
+  <a href="https://github.com/hmoog/daglight/blob/main/README.md">read it on GitHub</a>
+</footer>
+</body>
+</html>
