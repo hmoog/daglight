@@ -1,12 +1,15 @@
+---
+title: DAGLight
+---
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>{{ page.title | default: site.title }}</title>
+<title>{{ site.title }}</title>
 <meta name="description" content="{{ site.description }}">
-<meta property="og:title" content="{{ page.title | default: site.title }}">
+<meta property="og:title" content="{{ site.title }}">
 <meta property="og:description" content="{{ site.description }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,7 +99,8 @@ footer.site a:hover { color: var(--glow); }
   </nav>
 </header>
 <main class="wrap">
-{{ content }}
+{% capture readme %}{% include_relative README.md %}{% endcapture %}
+{{ readme | split: '# DAGLight' | last | markdownify }}
 </main>
 <footer class="site wrap">
   MIT licence · this page is the repository's README, rendered by GitHub Pages ·
