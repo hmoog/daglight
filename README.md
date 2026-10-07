@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo.svg">
+  <img alt="DAGLight" src="docs/logo-light.svg" width="860">
+</picture>
+
 # DAGLight
 
 **An incremental, adaptive colouring engine for GHOSTDAG protocols that learns from each block's
@@ -387,4 +392,5 @@ cargo run --release --bin daglight-sim -- --rate 20 --delay 1 --jitter 0.3 --min
    --attack-start 10 --stamp-pace 0.5]
 visualisation/player/build.sh --open            # record the replays and open the player
 python3 docs/figures.py                         # redraw the figures above
+python3 docs/logo.py                            # redraw the logo
 ```
