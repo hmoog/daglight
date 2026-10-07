@@ -14,7 +14,8 @@ H                   handshake, in delays (4): the margin that decides a fork, in
 B                   a block: id, selected parent S, other parents, work w(B), stamp t(B)
 chain(B)            B's selected chain from genesis; chain(B)[k] its block at height k
 past(B)             everything reachable from B, B included
-M                   B's mergeset: past(B) \ past(S), i.e. what the other parents add
+M                   B's mergeset: ⋃ past(p) over the other parents p, minus past(S); what the
+                    other parents add to S's past, B itself not included
 
 P(B)                what every node derives for B:
   past_work         Σ w over past(B)
@@ -57,7 +58,8 @@ missing parents, so blocks enter in causal order and stamps buy no weight.
 ```
 derive(B):
   S = selected parent;  P = copy of P(S)
-  for x ∈ M:                                                # read off the topology
+  for x ∈ M:                                                # the mergeset: what the other parents
+                                                            # add to past(S); read off the topology
       join(x)    = height where chain(x) meets chain(S)
       rival(x)   = chain(x)[join(x) + 1]                    # the fork block's child that x backs
       depth(x)   = chain_work(x) − chain_work(chain(S)[join(x)])
