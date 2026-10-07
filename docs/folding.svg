@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 350" width="760" height="350" font-family="Helvetica, Arial, sans-serif" font-size="13">
+<rect width="760" height="350" fill="white"/>
+<rect x="28" y="152" width="200" height="56" rx="28" fill="#d9811a" fill-opacity="0.12"/>
+<line x1="236.0" y1="60" x2="236.0" y2="300" stroke="#d9811a" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="236.0" y="50" fill="#d9811a" font-size="13" text-anchor="middle" font-weight="bold">folding threshold</text>
+<line x1="56" y1="180" x2="128" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="128" y1="180" x2="200" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="200" y1="180" x2="272" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="272" y1="180" x2="344" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="344" y1="180" x2="416" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="416" y1="180" x2="488" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="488" y1="180" x2="560" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="560" y1="180" x2="632" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<line x1="632" y1="180" x2="704" y2="180" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="56" cy="180" r="11" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="128" cy="180" r="11" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="200" cy="180" r="11" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="272" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="344" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="416" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="488" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="560" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="632" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="704" cy="180" r="11" fill="white" stroke="#1b2b28" stroke-width="3"/>
+<text x="632" y="158" fill="#1b2b28" font-size="13" text-anchor="middle" font-weight="bold">S</text>
+<text x="704" y="158" fill="#1b2b28" font-size="13" text-anchor="middle" font-weight="bold">B</text>
+<line x1="344" y1="180" x2="374" y2="122" stroke="#cf3b33" stroke-width="2"/>
+<line x1="374" y1="122" x2="430" y2="104" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="374" cy="122" r="8" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="430" cy="104" r="8" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<text x="344" y="208" fill="#5a6d69" font-size="11" text-anchor="middle" font-weight="normal">fork</text>
+<line x1="488" y1="180" x2="522" y2="124" stroke="#cf3b33" stroke-width="2"/>
+<line x1="522" y1="124" x2="584" y2="110" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="522" cy="124" r="8" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="584" cy="110" r="8" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<text x="488" y="208" fill="#5a6d69" font-size="11" text-anchor="middle" font-weight="normal">fork</text>
+<rect x="324" y="256" width="14" height="36" fill="#1b2b28" rx="3"/>
+<rect x="344" y="280" width="14" height="12" fill="#cf3b33" rx="3"/>
+<text x="331" y="250" fill="#1b2b28" font-size="12" text-anchor="middle" font-weight="bold">6</text>
+<text x="351" y="274" fill="#cf3b33" font-size="12" text-anchor="middle" font-weight="bold">2</text>
+<text x="331" y="306" fill="#5a6d69" font-size="10" text-anchor="middle" font-weight="normal">side</text>
+<text x="351" y="306" fill="#5a6d69" font-size="10" text-anchor="middle" font-weight="normal">rival</text>
+<rect x="468" y="280" width="14" height="12" fill="#1b2b28" rx="3"/>
+<rect x="488" y="280" width="14" height="12" fill="#cf3b33" rx="3"/>
+<text x="475" y="274" fill="#1b2b28" font-size="12" text-anchor="middle" font-weight="bold">2</text>
+<text x="495" y="274" fill="#cf3b33" font-size="12" text-anchor="middle" font-weight="bold">2</text>
+<text x="475" y="306" fill="#5a6d69" font-size="10" text-anchor="middle" font-weight="normal">side</text>
+<text x="495" y="306" fill="#5a6d69" font-size="10" text-anchor="middle" font-weight="normal">rival</text>
+<rect x="121" y="274" width="14" height="18" fill="#d9811a" rx="3"/>
+<text x="128" y="268" fill="#d9811a" font-size="12" text-anchor="middle" font-weight="bold">3</text>
+<text x="128" y="306" fill="#d9811a" font-size="10" text-anchor="middle" font-weight="normal">folded</text>
+<text x="128" y="330" fill="#d9811a" font-size="12" text-anchor="middle" font-weight="normal">decided: 10 against 3, the rival's 3 folds</text>
+<text x="416" y="330" fill="#5a6d69" font-size="12" text-anchor="middle" font-weight="normal">the forks still open, judged by every block</text>
+</svg>

@@ -1,0 +1,8 @@
+[package]
+name = "daglight-protocol-topology"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+daglight-protocol-block.workspace = true

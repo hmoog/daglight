@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 345" width="760" height="345" font-family="Helvetica, Arial, sans-serif" font-size="13">
+<rect width="760" height="345" fill="white"/>
+<path d="M80,216 L80,164 L292,120 L292,178 Z" fill="#d9811a" fill-opacity="0.12"/>
+<line x1="312" y1="60" x2="312" y2="314" stroke="#d9811a" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="312" y="50" fill="#d9811a" font-size="12" text-anchor="middle" font-weight="bold">honest folding threshold</text>
+<line x1="140" y1="208" x2="540" y2="208" stroke="#9aa3b2" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="300" y="334" fill="#5a6d69" font-size="12" text-anchor="middle" font-weight="normal">the mirror: neither lineage counts the other's work</text>
+<line x1="110" y1="190" x2="190" y2="165" stroke="#2c63d6" stroke-width="2"/>
+<line x1="190" y1="165" x2="270" y2="148" stroke="#2c63d6" stroke-width="2"/>
+<line x1="270" y1="148" x2="350" y2="138" stroke="#2c63d6" stroke-width="2"/>
+<line x1="350" y1="138" x2="430" y2="132" stroke="#2c63d6" stroke-width="2"/>
+<line x1="230" y1="100" x2="190" y2="165" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="310" y1="92" x2="270" y2="148" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="390" y1="88" x2="350" y2="138" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="430" y1="132" x2="510" y2="128" stroke="#2c63d6" stroke-width="2"/>
+<line x1="110" y1="190" x2="190" y2="240" stroke="#cf3b33" stroke-width="2"/>
+<line x1="190" y1="240" x2="270" y2="262" stroke="#cf3b33" stroke-width="2"/>
+<line x1="270" y1="262" x2="350" y2="278" stroke="#cf3b33" stroke-width="2"/>
+<line x1="350" y1="278" x2="430" y2="290" stroke="#cf3b33" stroke-width="2"/>
+<path d="M506,140 C391.0,140 391.0,254 276,254" fill="none" stroke="#2c63d6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<path d="M428,278 C392.0,278 392.0,148 356,148" fill="none" stroke="#cf3b33" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="190" cy="165" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="270" cy="148" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="350" cy="138" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="430" cy="132" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="230" cy="100" r="8" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="310" cy="92" r="8" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="390" cy="88" r="8" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="190" cy="240" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="270" cy="262" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="350" cy="278" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="350" cy="138" r="11" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="350" cy="138" r="16" fill="none" stroke="#9aa3b2" stroke-width="1.5"/>
+<circle cx="270" cy="262" r="16" fill="none" stroke="#cf3b33" stroke-width="1.5"/>
+<circle cx="510" cy="128" r="11" fill="white" stroke="#2c63d6" stroke-width="3"/>
+<circle cx="430" cy="290" r="11" fill="white" stroke="#cf3b33" stroke-width="3"/>
+<circle cx="110" cy="190" r="13" fill="#fbe9d3" stroke="#1b2b28" stroke-width="3"/>
+<text x="110" y="224" fill="#d9811a" font-size="12" text-anchor="middle" font-weight="normal">the fork, decided</text>
+<text x="510" y="106" fill="#2c63d6" font-size="13" text-anchor="middle" font-weight="bold">H</text>
+<text x="430" y="320" fill="#cf3b33" font-size="13" text-anchor="middle" font-weight="bold">A</text>
+<text x="270" y="296" fill="#cf3b33" font-size="11" text-anchor="middle" font-weight="normal">red</text>
+<text x="352" y="114" fill="#5a6d69" font-size="11" text-anchor="middle" font-weight="normal">settled</text>
+<rect x="552" y="40" width="200" height="96" rx="10" fill="white" stroke="#2c63d6" stroke-width="1.5"/>
+<text x="564" y="62" fill="#2c63d6" font-size="13" text-anchor="start" font-weight="bold">in every honest record</text>
+<text x="564" y="84" fill="#1b2b28" font-size="12" text-anchor="start" font-weight="normal">the hidden blocks join</text>
+<text x="564" y="102" fill="#1b2b28" font-size="12" text-anchor="start" font-weight="normal">below the threshold:</text>
+<text x="564" y="120" fill="#1b2b28" font-size="12" text-anchor="start" font-weight="normal">red, and red is final</text>
+<rect x="552" y="236" width="200" height="96" rx="10" fill="white" stroke="#cf3b33" stroke-width="1.5"/>
+<text x="564" y="258" fill="#cf3b33" font-size="13" text-anchor="start" font-weight="bold">in the hidden record</text>
+<text x="564" y="280" fill="#1b2b28" font-size="12" text-anchor="start" font-weight="normal">honest work is evidence</text>
+<text x="564" y="298" fill="#1b2b28" font-size="12" text-anchor="start" font-weight="normal">while A trails, settled</text>
+<text x="564" y="316" fill="#1b2b28" font-size="12" text-anchor="start" font-weight="normal">once built after the fold</text>
+</svg>

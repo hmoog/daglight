@@ -1,0 +1,10 @@
+[package]
+name = "daglight-protocol-block-perception"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+daglight-protocol-block.workspace = true
+daglight-protocol-parameters.workspace = true
+daglight-protocol-topology.workspace = true

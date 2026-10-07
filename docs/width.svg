@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" width="760" height="320" font-family="Helvetica, Arial, sans-serif" font-size="13">
+<rect width="760" height="320" fill="white"/>
+<line x1="60" y1="80" x2="120" y2="80" stroke="#cf3b33" stroke-width="2"/>
+<line x1="120" y1="80" x2="180" y2="80" stroke="#cf3b33" stroke-width="2"/>
+<line x1="180" y1="80" x2="240" y2="80" stroke="#cf3b33" stroke-width="2"/>
+<line x1="240" y1="80" x2="300" y2="80" stroke="#cf3b33" stroke-width="2"/>
+<line x1="300" y1="80" x2="360" y2="80" stroke="#cf3b33" stroke-width="2"/>
+<line x1="360" y1="80" x2="420" y2="80" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="60" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="120" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="180" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="240" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="300" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="360" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="420" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<text x="60" y="118" fill="#cf3b33" font-size="12" text-anchor="start" font-weight="normal">a lone chain: 7 blocks, 7 chain steps, width 1</text>
+<text x="60" y="136" fill="#cf3b33" font-size="12" text-anchor="start" font-weight="bold">weighs 1 / E of its work</text>
+<path d="M48,230 L262,158 L262,302 Z" fill="#2c63d6" fill-opacity="0.08" stroke="#2c63d6" stroke-opacity="0.35" stroke-dasharray="3 3"/>
+<line x1="60" y1="230" x2="150" y2="230" stroke="#2c63d6" stroke-width="2"/>
+<line x1="150" y1="230" x2="240" y2="230" stroke="#2c63d6" stroke-width="2"/>
+<line x1="105" y1="182" x2="130" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="105" y1="182" x2="150" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="195" y1="178" x2="170" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="195" y1="178" x2="240" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="120" y1="280" x2="130" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="120" y1="280" x2="150" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="210" y1="276" x2="170" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<line x1="210" y1="276" x2="240" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>
+<circle cx="60" cy="230" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="150" cy="230" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="240" cy="230" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="105" cy="182" r="9" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="195" cy="178" r="9" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="120" cy="280" r="9" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<circle cx="210" cy="276" r="9" fill="#9aa3b2" stroke="#9aa3b2" stroke-width="2"/>
+<text x="300" y="224" fill="#2c63d6" font-size="12" text-anchor="start" font-weight="normal">an entangled cone: 7 blocks, 3 chain steps, width 2.3</text>
+<text x="300" y="242" fill="#2c63d6" font-size="12" text-anchor="start" font-weight="bold">weighs in full once as wide as the network</text>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" width="760" height="340" font-family="Helvetica, Arial, sans-serif" font-size="13">
+<rect width="760" height="340" fill="white"/>
+<rect x="40" y="142" width="260" height="56" rx="28" fill="#d9811a" fill-opacity="0.12"/>
+<line x1="70" y1="170" x2="138" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="138" y1="170" x2="206" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="206" y1="170" x2="274" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="274" y1="170" x2="342" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="342" y1="170" x2="410" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="410" y1="170" x2="478" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="478" y1="170" x2="546" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="546" y1="170" x2="614" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<line x1="614" y1="170" x2="682" y2="170" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="70" cy="170" r="12" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="138" cy="170" r="12" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="206" cy="170" r="12" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="274" cy="170" r="12" fill="#fbe9d3" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="342" cy="170" r="12" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="410" cy="170" r="12" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="478" cy="170" r="12" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="546" cy="170" r="12" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="614" cy="170" r="12" fill="white" stroke="#1b2b28" stroke-width="2"/>
+<circle cx="682" cy="170" r="12" fill="white" stroke="#1b2b28" stroke-width="3"/>
+<text x="614" y="146" fill="#1b2b28" font-size="13" text-anchor="middle" font-weight="bold">S</text>
+<text x="682" y="146" fill="#1b2b28" font-size="13" text-anchor="middle" font-weight="bold">B</text>
+<line x1="308.0" y1="60" x2="308.0" y2="300" stroke="#d9811a" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="308.0" y="48" fill="#d9811a" font-size="13" text-anchor="middle" font-weight="bold">folding threshold</text>
+<text x="300.0" y="318" fill="#d9811a" font-size="12" text-anchor="end" font-weight="normal">decided</text>
+<text x="316.0" y="318" fill="#5a6d69" font-size="12" text-anchor="start" font-weight="normal">open</text>
+<line x1="206" y1="170" x2="240" y2="232" stroke="#cf3b33" stroke-width="2"/>
+<line x1="240" y1="232" x2="308" y2="262" stroke="#cf3b33" stroke-width="2"/>
+<line x1="308" y1="262" x2="376" y2="274" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="240" cy="232" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="308" cy="262" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<circle cx="376" cy="274" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
+<path d="M682,180 C533.0,180 533.0,266 384,266" fill="none" stroke="#cf3b33" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text x="392" y="302" fill="#cf3b33" font-size="12" text-anchor="start" font-weight="normal">red: votes on a fork decided before it arrived</text>
+<text x="206" y="200" fill="#5a6d69" font-size="11" text-anchor="middle" font-weight="normal">fork</text>
+<line x1="478" y1="170" x2="512" y2="108" stroke="#2c63d6" stroke-width="2"/>
+<line x1="512" y1="108" x2="580" y2="90" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="512" cy="108" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<circle cx="580" cy="90" r="11" fill="#2c63d6" stroke="#2c63d6" stroke-width="2"/>
+<path d="M682,160 C635.0,160 635.0,98 588,98" fill="none" stroke="#2c63d6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text x="412" y="66" fill="#2c63d6" font-size="12" text-anchor="start" font-weight="normal">blue: votes on a fork still open</text>
+<text x="478" y="200" fill="#5a6d69" font-size="11" text-anchor="middle" font-weight="normal">fork</text>
+</svg>

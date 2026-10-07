@@ -1,0 +1,16 @@
+[package]
+name = "daglight-simulation-network"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+daglight-protocol-block.workspace = true
+daglight-protocol-block-perception.workspace = true
+daglight-protocol-dag.workspace = true
+daglight-protocol-node.workspace = true
+daglight-protocol-store.workspace = true
+daglight-protocol-topology.workspace = true
+daglight-simulation-config.workspace = true
+daglight-simulation-history.workspace = true
+daglight-simulation-attacker.workspace = true

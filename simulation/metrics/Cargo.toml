@@ -1,0 +1,17 @@
+[package]
+name = "daglight-simulation-metrics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "daglight-sim"
+path = "src/main.rs"
+
+[dependencies]
+daglight-protocol-block-perception.workspace = true
+daglight-protocol-dag.workspace = true
+daglight-protocol-node.workspace = true
+daglight-simulation-config.workspace = true
+daglight-simulation-history.workspace = true
+daglight-simulation-network.workspace = true

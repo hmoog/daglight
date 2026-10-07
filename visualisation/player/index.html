@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAGLight Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a hydraulic schematic. Time runs left to right, every lane of the topology is a track,
+   work flows from the tips down the pipes into shared ancestry. Stage on the left, gauges on the right. */
+:root {
+  --bg: #eef3f2;
+  --surface: #fbfdfc;
+  --ink: #12211f;
+  --muted: #5a6d69;
+  --rule: #d5dfdc;
+  --track: #e3ebe9;
+  --water-lo: #cdeee9;
+  --water-hi: #075a6e;
+  --glow: #d9811a;
+  --blue: #2c63d6;
+  --red: #cf3b33;
+  --chain: #1b2b28;
+  --attacker: #8b45c9;
+  --settled: rgba(7, 90, 110, 0.07);
+  --pruned: rgba(18, 33, 31, 0.06);
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1514; --surface: #142120; --ink: #e2ece9; --muted: #8ea29e; --rule: #243432;
+    --track: #18272a; --water-lo: #1c4148; --water-hi: #6fe0ea; --glow: #f2a53b;
+    --blue: #6f9dff; --red: #ff6e64; --chain: #e2ece9; --attacker: #c08af2;
+    --settled: rgba(111, 224, 234, 0.07); --pruned: rgba(226, 236, 233, 0.05);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1514; --surface: #142120; --ink: #e2ece9; --muted: #8ea29e; --rule: #243432;
+  --track: #18272a; --water-lo: #1c4148; --water-hi: #6fe0ea; --glow: #f2a53b;
+  --blue: #6f9dff; --red: #ff6e64; --chain: #e2ece9; --attacker: #c08af2;
+  --settled: rgba(111, 224, 234, 0.07); --pruned: rgba(226, 236, 233, 0.05);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px;
+  line-height: 1.5; padding-inline: 16px; padding-block: 18px 40px;
+}
+.wrap { max-width: 1440px; margin-inline: auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.05; margin: 0; letter-spacing: -0.01em; }
+h1 small { display: block; font-family: var(--body); font-weight: 500; font-size: 14px; color: var(--muted); letter-spacing: 0; margin-top: 6px; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 16px; margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+select, button, .file {
+  font: 500 13px/1 var(--body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 11px; cursor: pointer;
+}
+button:hover, select:hover, .file:hover { border-color: var(--muted); }
+button:focus-visible, select:focus-visible, input:focus-visible, .file:focus-within { outline: 2px solid var(--glow); outline-offset: 2px; }
+button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); min-width: 84px; }
+.file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.file { position: relative; display: inline-flex; align-items: center; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 980px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; min-width: 0; }
+.canvas-wrap { position: relative; cursor: grab; touch-action: pan-y; }
+.canvas-wrap.dragging { cursor: grabbing; }
+canvas { display: block; width: 100%; }
+.tooltip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 6px 9px; font: 12px/1.4 var(--mono); white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 14px; border-top: 1px solid var(--rule); }
+[hidden] { display: none !important; }
+.transport input[type=range] { flex: 1 1 220px; accent-color: var(--glow); min-width: 0; }
+.clock { font: 600 13px var(--mono); font-variant-numeric: tabular-nums; min-width: 132px; }
+.side { display: grid; gap: 14px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.now p { margin: 0; }
+.now .lead { font-family: var(--display); font-size: 15px; font-weight: 600; }
+.now ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.gauge { display: grid; gap: 1px; }
+.gauge b { font: 600 18px var(--mono); font-variant-numeric: tabular-nums; }
+.gauge span { font-size: 12px; color: var(--muted); }
+.layers { display: grid; gap: 6px; }
+.layers label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 7px 10px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.ramp { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--water-lo), var(--water-hi)); }
+.ramp-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font: 12px/1.5 var(--mono); font-variant-numeric: tabular-nums; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.log { max-height: 280px; overflow-y: auto; display: grid; gap: 2px; font: 12px/1.45 var(--mono); }
+.log button { text-align: left; border: 0; background: transparent; padding: 4px 6px; border-radius: 4px; font: inherit; display: grid; grid-template-columns: 52px 1fr; gap: 8px; }
+.log button:hover { background: var(--track); }
+.log .t { color: var(--muted); font-variant-numeric: tabular-nums; }
+.tag { font-weight: 600; }
+.tag.reorg { color: var(--red); }
+.tag.adv { color: var(--blue); }
+.tag.cut { color: var(--glow); }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>DAGLight Flow<small>Watch blocks attach, their work flow down the chains into shared ancestry, the node fold the rest, and the folding threshold, finality point and pruning point move up the chain. Every frame is a real DAGLight run.</small></h1>
+    <div class="controls">
+      <label class="eyebrow" for="scenario">Scenario</label>
+      <select id="scenario"></select>
+      <label class="file" for="trace">Load replay<input id="trace" type="file" accept=".json,application/json"></label>
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="stage" aria-label="DAG animation">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="dag" aria-label="The DAG at the current step"></canvas>
+        <div class="tooltip" id="tip" hidden></div>
+      </div>
+      <div class="transport">
+        <button id="back" aria-label="Previous block">◀</button>
+        <button class="primary" id="play">Play</button>
+        <button id="fwd" aria-label="Next block">▶</button>
+        <input id="slider" type="range" min="0" max="0" value="0" aria-label="Step">
+        <span class="clock" id="clock">t 0.00 s · #0</span>
+        <select id="speed" aria-label="Speed">
+          <option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
+        </select>
+        <label class="layers" style="display:flex"><input id="follow" type="checkbox" checked> follow</label>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="card">
+        <span class="eyebrow">Colour blocks by</span>
+        <div class="seg" role="group" aria-label="Colour mode">
+          <button id="modeBacking" aria-pressed="true">Backing</button>
+          <button id="modeSequence" aria-pressed="false">Sequence</button>
+        </div>
+        <div id="legendBacking" class="legend-wrap">
+          <div class="ramp"></div>
+          <div class="ramp-labels"><span>0% of later work</span><span>all of it</span></div>
+        </div>
+        <div id="legendSequence" class="legend" hidden>
+          <span><i style="background:var(--blue)"></i>blue</span>
+          <span><i style="background:var(--red)"></i>red</span>
+          <span><i style="background:var(--chain)"></i>chain block</span>
+          <span><i style="border:1.5px solid var(--muted)"></i>not sequenced</span>
+        </div>
+        <div class="legend">
+          <span><i style="border:2px solid var(--ink)"></i>tip</span>
+          <span><i style="background:var(--glow)"></i>perception</span>
+          <span><i style="border:2px solid var(--attacker)"></i>withheld miner</span>
+        </div>
+        <p class="hint">Pipes thicken with the work that has flowed through; a lineage that no longer receives work fades. Size shows a block's blue work against the heaviest tip.</p>
+        <div class="layers">
+          <label><input type="checkbox" id="lFlow" checked> Work flowing down the chain</label>
+          <label><input type="checkbox" id="lChain" checked> Perception chain</label>
+          <label><input type="checkbox" id="lFolds" checked> Folded parents</label>
+          <label><input type="checkbox" id="lCuts" checked> Folding threshold, finality, pruning</label>
+        </div>
+      </div>
+      <div class="card">
+        <span class="eyebrow">The node's view</span>
+        <div class="gauges">
+          <div class="gauge"><b id="gBlueWork">0</b><span>perceived blue work, blocks</span></div>
+          <div class="gauge"><b id="gTips">0</b><span>tips</span></div>
+          <div class="gauge"><b id="gLag">0</b><span>folding lag, s</span></div>
+          <div class="gauge"><b id="gSeq">0</b><span>blocks sequenced</span></div>
+        </div>
+      </div>
+      <div class="card now" aria-live="polite">
+        <span class="eyebrow">This step</span>
+        <p class="lead" id="lead"></p>
+        <ul id="events"></ul>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Block</span>
+        <p class="hint" id="inspectHint">Hover or tap a block to see what the node derived for it.</p>
+        <dl class="kv" id="inspect" hidden></dl>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Updates the node reported</span>
+        <div class="log" id="log"></div>
+      </div>
+    </aside>
+  </div>
+
+</div>
+
+<script src="replays.js"></script>
+<script>
+(() => {
+  const REPLAYS = window.DAGLIGHT_REPLAYS || [];
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("dag"), ctx = canvas.getContext("2d"), wrap = $("canvasWrap");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ROW = 44, TOP = 46, BOTTOM = 26;
+  // A lane's height: the full row while the lanes fit, narrower for wide networks, never below MIN_ROW.
+  const MIN_ROW = 14, LANES_HEIGHT = 560;
+  let rowH = ROW;
+
+  let S = null;           // the loaded scenario, with everything precomputed
+  let frame = 0;          // blocks 0..frame are in the DAG
+  let playing = false, clockT = 0, last = 0;
+  let mode = "backing", hover = -1, pinned = -1;
+  let view = { pps: 60, x0: 0 };              // pixels per second, left edge in seconds
+  let cur = null;                             // the state at the current step
+  let pulse = { block: -1, start: 0 };
+  let colors = {};
+
+  // ---------- data ----------
+  // How often a step's state is kept; any other step is replayed forward from the one before it,
+  // so a long run costs memory in proportion to its length.
+  const CHECKPOINT = 64;
+  function prepare(raw, label) {
+    const B = raw.blocks, F = [null, ...raw.frames], N = B.length;
+    const unit = B[0].work;
+    // All work up to each block: the work mined after a block is a difference of two of them.
+    const cum = new Float64Array(N);
+    for (let k = 0; k < N; k++) cum[k] = (k ? cum[k - 1] : 0) + B[k].work;
+    // A lineage fades over a few delays once no work reaches it.
+    const tau = 3 * (raw.delay || 1) + 5 / Math.max(1, raw.rate || 1);
+    // Lanes as tracks, in order of first use.
+    const lanes = [...new Set(B.map((b) => b.lane))];
+    const row = new Map(lanes.map((l, i) => [l, i]));
+    const S = { raw, label, B, F, N, unit, cum, tau, rows: lanes.length, row, attacker: raw.attacker };
+
+    // A step's state: the work that has flowed into each block down the selected-parent pipes,
+    // when work last flowed into it, how the node has sequenced it, and how many it has sequenced.
+    const fresh = () => ({ k: 0, support: new Float64Array(N), fed: new Float64Array(N), kinds: new Int8Array(N), sequenced: 0 });
+    const copy = (st) => ({ k: st.k, support: st.support.slice(), fed: st.fed.slice(), kinds: st.kinds.slice(), sequenced: st.sequenced });
+    // Takes the state one step further: block `k` arrives, its work flows down its selected chain
+    // only, so a lineage that is folded stops receiving it, and the node reports its updates.
+    const step = (st) => {
+      const k = ++st.k, w = B[k].work, t = B[k].t;
+      st.fed[k] = t;
+      for (let x = B[k].parents[0]; x !== undefined; x = B[x].parents[0]) { st.support[x] += w; st.fed[x] = t; }
+      for (const u of F[k].updates) {
+        if (u.reorg) {
+          for (const id of u.reorg.reverted) st.kinds[id] = 0;
+          st.sequenced -= u.reorg.reverted.length;
+        } else {
+          for (const [id, kd] of u.advance) st.kinds[id] = kd === "b" ? 1 : kd === "r" ? 2 : 3;
+          st.sequenced += u.advance.length;
+        }
+      }
+    };
+    const marks = [fresh()];
+    const running = fresh();
+    for (let k = 1; k < N; k++) {
+      step(running);
+      if (k % CHECKPOINT === 0) marks.push(copy(running));
+    }
+    // Returns the state after step `k`: advanced in place when it is the next step, as while
+    // playing, else replayed from the checkpoint before it.
+    let current = fresh();
+    S.at = (k) => {
+      if (k !== current.k) {
+        if (k < current.k || k - current.k > CHECKPOINT) current = copy(marks[Math.floor(k / CHECKPOINT)]);
+        while (current.k < k) step(current);
+      }
+      return current;
+    };
+    return S;
+  }
+
+  // Returns the selected chain of `tip`, the genesis included.
+  function chainOf(tip) {
+    const out = new Set();
+    let x = tip;
+    while (x !== undefined) { out.add(x); x = S.B[x].parents[0]; }
+    return out;
+  }
+
+  // ---------- drawing ----------
+  // Reads the palette the page is themed in, so the canvas matches it.
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ["bg", "surface", "ink", "muted", "rule", "track", "water-lo", "water-hi", "glow", "blue", "red", "chain", "attacker", "settled", "pruned"]) colors[k] = cs.getPropertyValue("--" + k).trim();
+  }
+  // Returns a hex colour as its three channels.
+  function rgb(hex) { const h = hex.replace("#", ""); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); }
+  // Returns the colour `t` of the way from `a` to `b`.
+  function mix(a, b, t) { const x = rgb(a), y = rgb(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",")})`; }
+
+  // Sizes the canvas to the stage, one row per lane, sharp on high-density screens.
+  function size() {
+    const w = wrap.clientWidth, h = TOP + S.rows * rowH + BOTTOM;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = w * dpr; canvas.height = h * dpr; canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  // Where a time and a block land on the canvas.
+  const X = (t) => (t - view.x0) * view.pps;
+  const Y = (b) => TOP + S.row.get(S.B[b].lane) * rowH + rowH / 2;
+
+  // How much of a lineage's vote is still live: full while work flows into the block, fading once
+  // it stops, to a faint trace.
+  function alive(b) {
+    if (frame === 0 || b > frame) return 1;
+    const quiet = S.F[frame].t - cur.fed[b];
+    return Math.max(0.12, Math.exp(-quiet / S.tau));
+  }
+  // A block's size shows its blue work against the heaviest tip: tips in the running are large, the
+  // heaviest largest, and a block shrinks as the heaviest pulls ahead of it, by about a delay's
+  // worth of blocks at a time.
+  function radius(b) {
+    const f = S.F[frame];
+    if (!f) return 11 * rowH / ROW;
+    let heaviest = 0;
+    for (const t of f.tips) heaviest = Math.max(heaviest, S.B[t].blueWork);
+    const behind = Math.max(0, heaviest - S.B[b].blueWork) / S.unit;
+    const scale = Math.max(2, (S.raw.rate || 1) * (S.raw.delay || 1));
+    return (4 + 8 * Math.exp(-behind / scale)) * rowH / ROW;
+  }
+  // A selected-parent pipe carries the block's own work and all that flowed into the block.
+  function flow(b) {
+    return Math.min(13, 1 + 1.6 * Math.log1p((cur.support[b] + S.B[b].work) / S.unit)) * Math.max(0.5, rowH / ROW);
+  }
+  // How much of the work mined after a block has flowed into it: its share of the later work.
+  function backing(b) {
+    if (frame === 0 || b > frame) return 0;
+    const later = S.cum[frame] - S.cum[b];
+    return later > 0 ? Math.min(1, cur.support[b] / later) : 0;
+  }
+
+  // Draws the DAG at the current step: tracks, cut-offs, pipes, the perception's chain, the pulse
+  // and the blocks.
+  function draw(now) {
+    const w = wrap.clientWidth, h = TOP + S.rows * rowH + BOTTOM;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = colors.surface; ctx.fillRect(0, 0, w, h);
+    const f = S.F[frame];
+    // Tracks and the time axis.
+    for (let r = 0; r < S.rows; r++) {
+      ctx.fillStyle = r % 2 ? colors.surface : colors.track;
+      ctx.fillRect(0, TOP + r * rowH, w, rowH);
+    }
+    ctx.fillStyle = colors.muted; ctx.font = "11px " + getComputedStyle(document.body).getPropertyValue("--mono");
+    const step = niceStep(80 / view.pps);
+    for (let t = Math.ceil(view.x0 / step) * step; X(t) < w; t += step) {
+      ctx.fillText(t.toFixed(step < 1 ? 1 : 0) + " s", X(t) + 3, h - 8);
+      ctx.fillRect(X(t), h - BOTTOM + 2, 1, 5);
+    }
+    // The heights that move up the chain: pruning point, finality point, folding threshold.
+    if (f && $("lCuts").checked) {
+      const cut = (id, label, color, fill) => {
+        const x = X(S.B[id].t);
+        if (fill) { ctx.fillStyle = fill; ctx.fillRect(0, TOP, Math.max(0, x), S.rows * rowH); }
+        ctx.strokeStyle = color; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x, TOP - 6); ctx.lineTo(x, TOP + S.rows * rowH); ctx.stroke(); ctx.setLineDash([]);
+        return x;
+      };
+      const labels = [];
+      labels.push([cut(f.pruning, "pruning", colors.muted, colors.pruned), "pruning point"]);
+      labels.push([cut(f.final, "finality", colors.muted, null), "finality point"]);
+      labels.push([cut(f.folding, "folding", colors.glow, colors.settled), "folding threshold"]);
+      labels.sort((a, b) => a[0] - b[0]);
+      let lastEnd = -1e9, line = 0;
+      for (const [x, text] of labels) {
+        ctx.font = "11px " + getComputedStyle(document.body).getPropertyValue("--body");
+        const tw = ctx.measureText(text).width;
+        line = x - tw / 2 < lastEnd + 6 ? line + 1 : 0;
+        ctx.fillStyle = text.startsWith("folding") ? colors.glow : colors.muted;
+        ctx.fillText(text, x - tw / 2, 14 + line * 13);
+        lastEnd = x + tw / 2;
+      }
+    }
+    const visible = (b) => { const x = X(S.B[b].t); return x > -60 && x < w + 60; };
+    const perception = f ? chainOf(f.perception) : new Set([0]);
+    // Pipes, drawn from each block down to its parents.
+    for (let b = 1; b <= frame; b++) {
+      const blk = S.B[b];
+      if (!visible(b) && !blk.parents.some(visible)) continue;
+      const s = backing(b);
+      blk.parents.forEach((p, i) => {
+        const selected = i === 0;
+        if (!selected && !$("lFolds").checked) return;
+        ctx.strokeStyle = !selected ? colors.muted
+          : mix(colors["water-lo"], colors["water-hi"], 0.25 + 0.75 * s);
+        ctx.lineWidth = selected ? flow(b) : 1;
+        ctx.setLineDash(selected ? [] : [3, 4]);
+        ctx.globalAlpha = (selected ? 1 : 0.5) * alive(b);
+        pipe(b, p);
+      });
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
+    // The perception's chain glows.
+    if (f && $("lChain").checked) {
+      ctx.strokeStyle = colors.glow; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
+      for (const b of perception) { const p = S.B[b].parents[0]; if (p !== undefined && (visible(b) || visible(p))) pipe(b, p); }
+      ctx.globalAlpha = 1;
+    }
+    // Water: the newest block's work running down into its past.
+    if ($("lFlow").checked && !reduced && pulse.block > 0 && pulse.block <= frame) {
+      const age = (now - pulse.start) / 900;
+      if (age < 1.6) drawPulse(pulse.block, age);
+    }
+    // Blocks.
+    const tips = new Set(f ? f.tips : [0]);
+    for (let b = 0; b <= frame; b++) {
+      if (!visible(b)) continue;
+      const x = X(S.B[b].t), y = Y(b), blk = S.B[b];
+      let r = radius(b);
+      if (b === pulse.block) r += 3 * Math.max(0, 1 - (now - pulse.start) / 350);
+      ctx.globalAlpha = alive(b);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      if (mode === "backing") {
+        ctx.fillStyle = mix(colors["water-lo"], colors["water-hi"], backing(b));
+        ctx.fill();
+      } else {
+        const k = cur.kinds[b];
+        if (k) { ctx.fillStyle = k === 1 ? colors.blue : k === 2 ? colors.red : colors.chain; ctx.fill(); }
+        else { ctx.fillStyle = colors.surface; ctx.fill(); ctx.strokeStyle = colors.muted; ctx.lineWidth = 1.5; ctx.stroke(); }
+      }
+      if (blk.miner === S.attacker) { ctx.strokeStyle = colors.attacker; ctx.lineWidth = 2; ctx.stroke(); }
+      if (tips.has(b)) { ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, Math.PI * 2); ctx.strokeStyle = colors.ink; ctx.lineWidth = 1.6; ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      if (f && b === f.perception) { ctx.beginPath(); ctx.arc(x, y, r + 7, 0, Math.PI * 2); ctx.strokeStyle = colors.glow; ctx.lineWidth = 2.5; ctx.stroke(); }
+      if (b === hover || b === pinned) { ctx.beginPath(); ctx.arc(x, y, r + 11, 0, Math.PI * 2); ctx.strokeStyle = colors.ink; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.stroke(); ctx.setLineDash([]); }
+    }
+  }
+  // Strokes the pipe from a block to one of its parents.
+  function pipe(b, p) {
+    const x1 = X(S.B[b].t), y1 = Y(b), x2 = X(S.B[p].t), y2 = Y(p);
+    const mx = (x1 + x2) / 2;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.bezierCurveTo(mx, y1, mx, y2, x2, y2); ctx.stroke();
+  }
+  // Returns the point `u` of the way along the pipe from a block to one of its parents.
+  function bez(b, p, u) {
+    const x1 = X(S.B[b].t), y1 = Y(b), x2 = X(S.B[p].t), y2 = Y(p), mx = (x1 + x2) / 2, v = 1 - u;
+    return [v*v*v*x1 + 3*v*v*u*mx + 3*v*u*u*mx + u*u*u*x2, v*v*v*y1 + 3*v*v*u*y1 + 3*v*u*u*y2 + u*u*u*y2];
+  }
+  // Draws the newest block's work running down its selected chain, `age` seconds in.
+  function drawPulse(src, age) {
+    // Down the selected chain: each pipe fills in turn, a few blocks deep.
+    const edges = [];
+    for (let b = src, d = 0; d < 7 && S.B[b].parents.length; b = S.B[b].parents[0], d++) edges.push([b, S.B[b].parents[0], d]);
+    const front = age * 7;
+    ctx.fillStyle = colors["water-hi"];
+    for (const [b, p, d] of edges) {
+      const u = front - d;
+      if (u <= 0 || u >= 1.6) continue;
+      const fade = Math.max(0, 1 - (age - 0.9) / 0.7);
+      for (const off of [0, 0.18, 0.36]) {
+        const uu = u - off;
+        if (uu <= 0 || uu >= 1) continue;
+        const [x, y] = bez(b, p, uu);
+        ctx.globalAlpha = 0.85 * fade;
+        ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // Returns a round tick spacing no smaller than `raw`.
+  function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw)); for (const m of [1, 2, 5, 10]) if (m * p >= raw) return m * p; return 10 * p; }
+
+  // ---------- narration ----------
+  const name = (b) => "#" + b;
+  const blocksOf = (w) => (w / S.unit).toFixed(1);
+  // Tells what the current step did: who attached where, and what the node reported.
+  function narrate() {
+    const f = S.F[frame], prev = S.F[frame - 1];
+    const lead = $("lead"), ev = $("events");
+    ev.innerHTML = "";
+    if (!f) { lead.textContent = "The genesis. Press Play or step forward to let blocks attach."; return; }
+    const blk = S.B[frame];
+    const who = blk.miner === S.attacker ? "the withholding miner" : "miner " + (blk.miner + 1);
+    lead.textContent = `${name(frame)} by ${who} attaches to ${name(blk.parents[0])}` +
+      (blk.parents.length > 1 ? ` and folds ${blk.parents.slice(1).map(name).join(", ")}.` : ".");
+    const add = (html) => { const li = document.createElement("li"); li.innerHTML = html; ev.appendChild(li); };
+    const pp = prev ? prev.perception : 0;
+    for (const u of f.updates) {
+      if (u.reorg) add(`<span class="tag reorg">Reorg</span> back to ${name(u.reorg.common)}: ${u.reorg.chain.length} chain block${u.reorg.chain.length > 1 ? "s" : ""} reverted, ${u.reorg.reverted.length} blocks no longer sequenced.`);
+      else {
+        const n = u.advance.length, reds = u.advance.filter((x) => x[1] === "r").length, blues = u.advance.filter((x) => x[1] === "b").length;
+        add(`<span class="tag adv">Advance</span> sequences ${n}: ${blues} blue, ${reds} red, ${n - blues - reds} chain block${n - blues - reds > 1 ? "s" : ""}.`);
+      }
+    }
+    if (f.perception !== pp) add(`Perception moves to ${name(f.perception)}, blue work ${blocksOf(S.B[f.perception].blueWork)} blocks.`);
+    else add(`Perception stays at ${name(f.perception)}: nothing heavier arrived.`);
+    if (prev && f.folding !== prev.folding) add(`<span class="tag cut">Folding</span> threshold moves to ${name(f.folding)} at height ${S.B[f.folding].height}: forks below are closed for good.`);
+    if (prev && f.final !== prev.final) add(`Finality point moves to ${name(f.final)}.`);
+    if (prev && f.pruning !== prev.pruning) add(`Pruning point moves to ${name(f.pruning)}.`);
+  }
+  // Updates the gauges, the clock and the slider to the current step.
+  function gauges() {
+    const f = S.F[frame];
+    $("gBlueWork").textContent = f ? blocksOf(S.B[f.perception].blueWork) : "1.0";
+    $("gTips").textContent = f ? f.tips.length : 1;
+    $("gLag").textContent = f ? (f.t - S.B[f.folding].t).toFixed(1) : "0.0";
+    $("gSeq").textContent = cur.sequenced;
+    $("clock").textContent = `t ${(f ? f.t : 0).toFixed(2)} s · #${frame} of ${S.N - 1}`;
+    $("slider").value = frame;
+  }
+  // Lists every step the node reported something at, as a button that jumps there.
+  function buildLog() {
+    const log = $("log"); log.innerHTML = "";
+    for (let k = 1; k < S.F.length; k++) {
+      const f = S.F[k], prev = S.F[k - 1];
+      const items = [];
+      for (const u of f.updates) if (u.reorg) items.push(`<span class="tag reorg">reorg</span> to ${name(u.reorg.common)}, −${u.reorg.reverted.length}`);
+      const reds = f.updates.filter((u) => u.advance).flatMap((u) => u.advance).filter((x) => x[1] === "r").length;
+      if (reds) items.push(`<span class="tag adv">advance</span> with ${reds} red`);
+      if (prev && f.folding !== prev.folding) items.push(`<span class="tag cut">folding</span> ${name(f.folding)}`);
+      if (!items.length) continue;
+      const btn = document.createElement("button");
+      btn.innerHTML = `<span class="t">${f.t.toFixed(2)}s</span><span>${name(k)}: ${items.join(" · ")}</span>`;
+      btn.addEventListener("click", () => { setFrame(k, true); });
+      log.appendChild(btn);
+    }
+  }
+  // Shows what the node derived for block `b`, or the hint if there is none.
+  function inspect(b) {
+    const dl = $("inspect");
+    if (b < 0) { dl.hidden = true; $("inspectHint").hidden = false; return; }
+    const blk = S.B[b], f = S.F[frame];
+    const rows = [
+      ["block", name(b) + (b === 0 ? " (genesis)" : "")],
+      ["miner", b === 0 ? "–" : blk.miner === S.attacker ? "withholding" : String(blk.miner + 1)],
+      ["time", blk.t.toFixed(3) + " s"],
+      ["height", blk.height],
+      ["parents", blk.parents.length ? blk.parents.map(name).join(" ") + " (selected first)" : "–"],
+      ["blue work", blocksOf(blk.blueWork) + " blocks"],
+      ["past work", blocksOf(blk.past) + " blocks"],
+      ["folding threshold", "height " + blk.folding],
+      ["final point", "height " + blk.finalHeight],
+      ["backing", (100 * backing(b)).toFixed(0) + "% of later work"],
+      ["last work in", frame && b <= frame ? (S.F[frame].t - cur.fed[b]).toFixed(2) + " s ago" : "–"],
+      ["sequence", ["not sequenced", "blue", "red", "chain block"][cur.kinds[b]]],
+    ];
+    if (blk.delay !== undefined) rows.splice(9, 0, ["learned delay", (blk.delay / 1000).toFixed(2) + " s"]);
+    dl.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+    dl.hidden = false; $("inspectHint").hidden = true;
+  }
+
+  // ---------- control ----------
+  // Moves to step `k`: the next step pulses its block, a `jump` elsewhere does not.
+  function setFrame(k, jump) {
+    k = Math.max(0, Math.min(S.N - 1, k));
+    if (k === frame + 1) pulse = { block: k, start: performance.now() };
+    else if (jump) pulse = { block: -1, start: 0 };
+    frame = k;
+    cur = S.at(k);
+    clockT = S.F[k] ? S.F[k].t : 0;
+    if ($("follow").checked) followView();
+    narrate(); gauges(); inspect(pinned >= 0 ? pinned : hover);
+    requestDraw();
+  }
+  // Follows the run at a steady zoom, the newest block at the same place near the right edge.
+  function followView() {
+    const w = wrap.clientWidth, t = S.F[frame] ? S.F[frame].t : 0;
+    view.x0 = Math.max(-0.5, t - (w * 0.78) / view.pps);
+  }
+  // Returns the zoom at which the folding threshold stays in view throughout the run: the newest
+  // block sits at 78% of the width, so the longest lag behind it, with a little to spare, must fit
+  // into the rest.
+  function thresholdZoom() {
+    let lag = 0;
+    for (let k = 1; k < S.N; k++) lag = Math.max(lag, S.F[k].t - S.B[S.F[k].folding].t);
+    const spare = 2 / Math.max(1, S.raw.rate || 1);
+    return Math.max(8, Math.min(400, (wrap.clientWidth * 0.72) / (lag + spare)));
+  }
+  let raf = 0;
+  // Draws on the next frame, once however often it is asked.
+  function requestDraw() { if (!raf) raf = requestAnimationFrame(tick); }
+  // One animation frame: advances the clock while playing, then draws.
+  function tick(now) {
+    raf = 0;
+    if (playing) {
+      const dt = last ? (now - last) / 1000 : 0; last = now;
+      clockT += dt * Number($("speed").value) * (S.raw.rate >= 5 ? 0.25 : 1);
+      while (frame < S.N - 1 && S.F[frame + 1].t <= clockT) setFrame(frame + 1);
+      if (frame >= S.N - 1) { playing = false; $("play").textContent = "Replay"; }
+    }
+    draw(now);
+    const animating = pulse.block > 0 && now - pulse.start < 1500 && !reduced;
+    if (playing || animating) requestDraw();
+  }
+  // Loads a replay and opens it well into the run, zoomed so the folding threshold stays in view.
+  function load(raw, label) {
+    S = prepare(raw, label);
+    rowH = Math.max(MIN_ROW, Math.min(ROW, LANES_HEIGHT / S.rows));
+    $("slider").max = S.N - 1;
+    view.pps = thresholdZoom();
+    $("follow").checked = true;
+    size(); buildLog();
+    hover = -1; pinned = -1; playing = false; $("play").textContent = "Play";
+    setFrame(Math.round((S.N - 1) * 0.62), true);
+  }
+
+  $("play").addEventListener("click", () => {
+    if (frame >= S.N - 1) setFrame(0, true);
+    playing = !playing; last = 0;
+    $("play").textContent = playing ? "Pause" : "Play";
+    requestDraw();
+  });
+  $("back").addEventListener("click", () => setFrame(frame - 1, true));
+  $("fwd").addEventListener("click", () => setFrame(frame + 1));
+  $("slider").addEventListener("input", (e) => setFrame(Number(e.target.value), true));
+  $("follow").addEventListener("change", () => { if ($("follow").checked) followView(); requestDraw(); });
+  for (const id of ["lFlow", "lChain", "lFolds", "lCuts"]) $(id).addEventListener("change", requestDraw);
+  const setMode = (m) => {
+    mode = m;
+    $("modeBacking").setAttribute("aria-pressed", m === "backing");
+    $("modeSequence").setAttribute("aria-pressed", m === "sequence");
+    $("legendBacking").hidden = m !== "backing"; $("legendSequence").hidden = m !== "sequence";
+    requestDraw();
+  };
+  $("modeBacking").addEventListener("click", () => setMode("backing"));
+  $("modeSequence").addEventListener("click", () => setMode("sequence"));
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+    if (e.key === "ArrowRight") setFrame(frame + 1);
+    if (e.key === "ArrowLeft") setFrame(frame - 1, true);
+    if (e.key === " ") { e.preventDefault(); $("play").click(); }
+  });
+
+  // Hover, tap and drag on the canvas.
+  // Returns the block under the pointer, if any, with the pointer's canvas position.
+  function pick(ev) {
+    const r = canvas.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+    let best = -1, bd = Infinity;
+    for (let b = 0; b <= frame; b++) {
+      const dx = X(S.B[b].t) - mx, dy = Y(b) - my, d = dx * dx + dy * dy, reach = radius(b) + 6;
+      if (d < reach * reach && d < bd) { bd = d; best = b; }
+    }
+    return [best, mx, my];
+  }
+  let drag = null;
+  wrap.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, x0: view.x0, moved: false }; wrap.classList.add("dragging"); });
+  window.addEventListener("pointerup", (e) => {
+    if (drag && !drag.moved) { const [b] = pick(e); pinned = b === pinned ? -1 : b; inspect(pinned); requestDraw(); }
+    drag = null; wrap.classList.remove("dragging");
+  });
+  wrap.addEventListener("pointermove", (e) => {
+    if (drag && e.buttons) {
+      const dx = e.clientX - drag.x;
+      if (Math.abs(dx) > 3) { drag.moved = true; $("follow").checked = false; view.x0 = drag.x0 - dx / view.pps; requestDraw(); }
+      return;
+    }
+    const [b, mx, my] = pick(e);
+    if (b !== hover) { hover = b; if (pinned < 0) inspect(b); requestDraw(); }
+    const tip = $("tip");
+    if (b >= 0) {
+      const blk = S.B[b];
+      tip.textContent = `${name(b)} · blue work ${blocksOf(blk.blueWork)} · backing ${(100 * backing(b)).toFixed(0)}%`;
+      tip.hidden = false;
+      tip.style.left = Math.min(mx + 14, wrap.clientWidth - tip.offsetWidth - 6) + "px";
+      tip.style.top = Math.max(4, my - 34) + "px";
+    } else tip.hidden = true;
+  });
+  wrap.addEventListener("pointerleave", () => { $("tip").hidden = true; hover = -1; if (pinned < 0) inspect(-1); requestDraw(); });
+  wrap.addEventListener("wheel", (e) => {
+    if (!e.ctrlKey && Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, t = view.x0 + mx / view.pps;
+    view.pps = Math.max(8, Math.min(800, view.pps * Math.exp(-e.deltaY * 0.0015)));
+    view.x0 = t - mx / view.pps;
+    requestDraw();
+  }, { passive: false });
+
+  // Scenarios and traces.
+  const select = $("scenario");
+  for (const r of REPLAYS) { const o = document.createElement("option"); o.value = r.id; o.textContent = r.label; select.appendChild(o); }
+  const builtIn = (id) => REPLAYS.find((r) => r.id === id);
+  select.addEventListener("change", () => {
+    if (select.value === "custom") return;
+    load(builtIn(select.value), select.selectedOptions[0].textContent);
+  });
+  $("trace").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text.includes("DAGLIGHT_REPLAYS") ? text.slice(text.indexOf("["), text.lastIndexOf("]") + 1) : text);
+      const raw = Array.isArray(parsed) ? parsed[0] : parsed;
+      if (!raw.blocks || !raw.frames) throw new Error("no blocks or frames");
+      let o = select.querySelector('option[value="custom"]');
+      if (!o) { o = document.createElement("option"); o.value = "custom"; select.appendChild(o); }
+      o.textContent = file.name; select.value = "custom";
+      load(raw, file.name);
+    } catch (err) {
+      $("lead").textContent = `That file is not a DAGLight replay (${err.message}). Record one with daglight-recorder and load it again.`;
+    }
+  });
+
+  const themeChange = () => { readColors(); requestDraw(); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeChange);
+  new MutationObserver(themeChange).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  new ResizeObserver(() => { if (S) { size(); if ($("follow").checked) followView(); requestDraw(); } }).observe(wrap);
+
+  readColors();
+  // The scenario named in the address, as in index.html#wider, else the first.
+  const first = REPLAYS.find((r) => r.id === location.hash.slice(1)) || REPLAYS[0];
+  if (first) { select.value = first.id; load(first, first.label); }
+  else $("lead").textContent = "No replays found next to this page. Run player/build.sh to generate replays.js.";
+  if (document.fonts) document.fonts.ready.then(requestDraw);
+})();
+</script>

@@ -1,0 +1,19 @@
+[package]
+name = "daglight-visualisation-recorder"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "daglight-recorder"
+path = "src/main.rs"
+
+[dependencies]
+daglight-protocol-block.workspace = true
+daglight-protocol-topology.workspace = true
+daglight-protocol-block-perception.workspace = true
+daglight-protocol-dag.workspace = true
+daglight-protocol-store.workspace = true
+daglight-protocol-node.workspace = true
+daglight-simulation-config.workspace = true
+daglight-simulation-network.workspace = true

@@ -1,0 +1,37 @@
+[workspace]
+resolver = "2"
+members = [
+    "protocol/*",
+    "simulation/*",
+    "visualisation/recorder",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+daglight-protocol-block = { path = "protocol/block" }
+daglight-protocol-block-perception = { path = "protocol/block-perception" }
+daglight-protocol-dag = { path = "protocol/dag" }
+daglight-protocol-node = { path = "protocol/node" }
+daglight-protocol-parameters = { path = "protocol/parameters" }
+daglight-protocol-store = { path = "protocol/store" }
+daglight-protocol-topology = { path = "protocol/topology" }
+daglight-simulation-attacker = { path = "simulation/attacker" }
+daglight-simulation-config = { path = "simulation/config" }
+daglight-simulation-history = { path = "simulation/history" }
+daglight-simulation-metrics = { path = "simulation/metrics" }
+daglight-simulation-network = { path = "simulation/network" }
+daglight-visualisation-recorder = { path = "visualisation/recorder" }
+
+# The table tests simulate whole networks; unoptimised they would take minutes.
+[profile.test]
+opt-level = 3
+
+# Link-time optimisation across the crates: the rules call many small generic functions of the
+# index and perception crates.
+[profile.release]
+lto = "fat"
+codegen-units = 1
