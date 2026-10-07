@@ -95,8 +95,8 @@ first fold, whether or not the other side ever decides the fork its own way.
 Deciding can stall. When the work a lineage expects stops showing up, say because half the hash rate
 left, no block sees a majority, and nothing is decided. That is the right response, since from
 inside a lineage a vanished half and a hidden half look the same, and it costs only the window,
-which grows meanwhile: late arrivals stay blue, held work counts as folded work does, and tip choice
-goes on. One case needs a way out of it. If deciding stalls for a whole finality horizon, the
+which grows meanwhile, and the judging that reads it whole in every block: late arrivals stay blue,
+held work counts as folded work does, and tip choice goes on. One case needs a way out of it. If deciding stalls for a whole finality horizon, the
 threshold is forced up through the forks older than the horizon, closing each as judged while the
 side leads every rival there outright. A fork the side does not lead stays open: the lineage has
 lost it.
@@ -114,7 +114,8 @@ Honest blocks are blue, because an honest block votes within one network delay o
 fork closes only on a lead of four delays of work, which takes at least four delays to build. That
 holds up under attack: in the simulator, against attackers of up to 49% of the hash rate hiding,
 harvesting, balancing and revealing on a timer, honest work turns red only in the races forced by
-periodic reveals near 50%, and then at most half a percent of it. In the setting `B` perceives, blue
+periodic reveals near 50%, or while a delay the genesis guessed far too short is still being
+learned, and then at most half a percent of it. In the setting `B` perceives, blue
 and red are as close as it gets to honest and dishonest: a blue block voted while the question was
 open, as an honest miner does; a red block voted on a question already decided, which is what a
 withheld block looks like when it finally arrives. Blue is what may be imported. How much of it
@@ -237,9 +238,9 @@ min(c, cone / E) + (cone − c)
 
 The work beside the chain counts in full; the chain itself counts in full only once the cone is as
 wide as the network, and a lone chain, one block per step with nothing beside it, weighs `1 / E` of
-its work. An honest cone is as wide as the network by construction, so it is never discounted. A
-spine is discounted until it entangles like the rest of the network, which it cannot do while it
-hides.
+its work. An honest cone is as wide as the network once it is a delay old, so it is not discounted;
+a younger cone is, on either side alike. A spine is discounted until it entangles like the rest of
+the network, which it cannot do while it hides.
 
 ![A lone chain against an entangled cone](docs/width.svg)
 
@@ -253,7 +254,8 @@ The genesis fixes three things, inherited by every block: the block rate, the fi
 the handshake, four delays, which is both the margin that decides a fork and the longest an honest
 block is assumed to be on its way. Everything else a block learns from its past and passes to its
 children; the genesis only seeds it with a guess of the delay and the width, which the DAG replaces
-as it grows.
+as it grows, at the horizon's pace: a sample moves the delay by its share of a horizon of work, so a
+wrong guess is corrected over horizons, not blocks.
 
 The **block work** a child must carry follows the tip's recent work over the horizon. The **delay**
 is measured in work rather than seconds: a merged block had missed some of `S`'s past, the work the
@@ -318,9 +320,11 @@ in sealing off a minority and in making the import itself a race, it looks to do
 known in which DAGKnight's search would decide better or converge faster. What DAGLight lacks is
 DAGKnight's formal footing. Its colouring reads stamps in the majority test and learns its
 yardsticks from history, an attack surface a `k`-colouring does not have, and its convergence proof
-is still owed. The costs that can be measured are bounded: stamps buy no weight, which the simulator
-checks with attackers stamping at half and at double pace, and a low genesis guess costs a third of
-a percent once. The comparison of convergence speed is a suspicion, not a measurement.
+is still owed, and the simulator's attackers withhold, harvest and balance: none yet aims at the
+yardsticks or at the clock, and every honest clock agrees. The costs that can be measured are
+bounded: stamps buy no weight, which the simulator checks with attackers stamping at half and at
+double pace, and in no measured case does more than half a percent of honest work turn red. The
+comparison of convergence speed is a suspicion, not a measurement.
 
 ## In the code
 
@@ -354,19 +358,28 @@ The result that matters is that honest work stays blue. The simulator runs ten h
 twenty blocks a second with a one-second delay against attackers of up to 49%: public spines,
 withholders revealing when ahead or on a timer, harvesters that merge into a private chain every
 honest block it may list, greedy miners, private DAGs, and balancers that show each half of the
-network its favoured side first. In 140 measured cases honest work turns red in two situations only.
-Attackers of 40% to 49% revealing every ten or twenty seconds force a race at each reveal, and the
-honest blocks mined onto the revealed branch in the moment before it loses turn red: at most 0.51%
-of honest work, with reorganisations of up to ten delays. And a genesis that guesses the delay at a
-third of the truth costs 0.34% while the true delay is learned. Everywhere else the number is zero,
-and honest forks close in about eight seconds. A near-majority miner can hold the chain, as in any
-proof-of-work chain; in a DAG that costs nobody anything while honest work stays counted. Every
-case, with its exact numbers, is a test in `simulation/metrics/tests/table.rs`.
+network its favoured side first. In 140 measured cases honest work turns red in two situations
+only, and never more than half a percent of it. Attackers of 40% to 49% revealing every ten or
+twenty seconds force a race at each reveal, and the honest blocks mined onto the revealed branch in
+the moment before it loses turn red: at most 0.51% of honest work, with reorganisations of up to
+ten delays. And a genesis that guesses the delay at a third of the truth leaves the margin shorter
+than the blocks in flight, 0.34% of honest work in a minute, until the delay is learned, which
+takes horizons. Everywhere else the number is zero, and honest forks close in about eight seconds.
+Every case, with its exact numbers, is a test in `simulation/metrics/tests/table.rs`.
+
+The chain itself goes to the largest miner well short of a majority: an honest pool of 20% mines
+over half the chain blocks, one of 30% nineteen in twenty, and a harvester takes the whole chain
+from 40%, since a miner's own tip always holds its own last delay of blocks, which no other tip can
+yet. Any rule that chooses the heaviest past has this, GHOSTDAG included. It costs no honest work,
+as every block the chain merges stays blue, and it would matter only if a chain block were given
+something every blue block is not; nothing here does, and a DAG that counts every block alike is
+what spares a miner the pool in the first place. The pools are measured in
+`simulation/network/tests/chain.rs`.
 
 ## Running
 
 ```
-cargo test                                      # the worked examples and 15 measured cases
+cargo test                                      # the worked examples, 15 measured cases, pools
 cargo test -- --include-ignored                 # all 140 cases, and pruning against none
 cargo run --release --bin daglight-sim -- --rate 20 --delay 1 --jitter 0.3 --miners 10 --duration 60 --seed 1
   [--pool 0.4] [--assumed-delay 1] [--rate-switch 60 --rate2 1] [--fixed] [--prune 60] [--finality 300]

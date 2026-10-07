@@ -98,7 +98,7 @@ impl<Id: BlockId, W: Work> Rivals<Id, W> {
     /// Holds `work` foldable here, if more than held so far; never more than is contested. Returns
     /// how much more is held.
     pub(crate) fn hold(&mut self, work: W) -> W {
-        let raised = work.max(self.held) - self.held;
+        let raised = work.min(self.contested).max(self.held) - self.held;
         self.held = self.held + raised;
         raised
     }
