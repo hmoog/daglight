@@ -204,6 +204,16 @@ The pace and the width come only from the folded chain, decided history every li
 so a minority cannot teach the network a lower bar. The genesis seeds `block_work`, `delay` and
 `E`; the DAG replaces them over horizons.
 
+### Fixed network
+
+`N` is an interface, and the rules above read it the same way whatever stands behind it. The
+learned network is the default; the other implementation, `FixedNetworkPerception`, keeps the
+genesis's `block_work`, `delay` and `E` for good, with `rate = block_work` and
+`delay_work = block_work · delay / interval`, and its `Sample` and `Learn` do nothing. That
+separates the colouring from its estimators: the structural rules can be studied with every
+yardstick held still, by `--fixed` in the simulator and `Config::fixed()` in the measured table,
+whose `fixed*` rows pair with their learned twins.
+
 ## Tips, the next block, the order
 
 ```
