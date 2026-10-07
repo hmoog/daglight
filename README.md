@@ -338,7 +338,8 @@ comparison of convergence speed is a suspicion, not a measurement.
 ## In the code
 
 The workspace has three subdomains of crates, `daglight-<subdomain>-<crate>`; the code is the
-specification, one file per type. `protocol/` holds the engine: `block` (`Block`, `Work`),
+specification, one file per type, and `docs/algorithm.md` states the rules as pseudocode, one
+procedure per step. `protocol/` holds the engine: `block` (`Block`, `Work`),
 `parameters` (`ProtocolParameters`), `topology` (the DAG's structure, with lanes and reach for
 ancestry in one comparison), `block-perception` (the colouring: `BlockPerception`, derived from a
 `MergedPerception`: record, decide, force the closings the horizon is due, judge, learn), `dag`
