@@ -18,7 +18,7 @@ pub struct MergedPerception<'a, Id, W, N> {
     pub parent: Arc<BlockPerception<Id, W, N>>,
     /// The parent and its chain, read by height.
     pub ancestors: Chain<'a, Id, PerceptionSummary<W>>,
-    /// The blocks it merges, in address order.
+    /// The blocks it merges, by id: the one order the delay's samples are taken in.
     pub merged: Vec<MergedBlock<Id, W>>,
     /// All work in the block's past, before its own: the parent's past and the merged blocks.
     pub seen: W,
@@ -35,9 +35,10 @@ impl<'a, Id: BlockId, W: Work, N: NetworkPerception<W>> MergedPerception<'a, Id,
         parents: Vec<BlockAddress>,
         parent: Arc<BlockPerception<Id, W, N>>,
         ancestors: Chain<'a, Id, PerceptionSummary<W>>,
-        merged: Vec<MergedBlock<Id, W>>,
+        mut merged: Vec<MergedBlock<Id, W>>,
         pruning_height: Height,
     ) -> Self {
+        merged.sort_unstable_by_key(|m| m.id);
         let seen = merged.iter().fold(parent.past_work, |a, m| a + m.work);
         Self {
             block,
@@ -104,22 +105,11 @@ impl<'a, Id: BlockId, W: Work, N: NetworkPerception<W>> MergedPerception<'a, Id,
     }
 
     /// Returns whether the fork at the lowest open height `k` is decided by `forks`: the chain's
-    /// side leads the rivals recorded there by the margin, and the work the block has seen since
-    /// the chain block at `k` is a majority of the network's.
+    /// side leads the rivals recorded there, each weighed in its own cone, by the margin.
     pub(crate) fn decided(&self, k: Height, forks: &ForksPerception<Id, W>) -> bool {
-        // The side leads the rivals, each weighed in its own cone, by the margin.
-        let at = self.ancestors.at(k);
         let rivals = forks
             .get(k)
             .map_or_else(W::zero, |r| r.weighed(&self.parent.network));
-        let leads = self.side(k, forks.above(k)) > rivals + self.margin();
-
-        // The work seen since the fork block is a majority of what the network did meanwhile.
-        let majority = self.parent.network.majority(
-            &self.parent.protocol_parameters,
-            self.seen - at.past_work,
-            self.block.time - at.time,
-        );
-        leads && majority
+        self.side(k, forks.above(k)) > rivals + self.margin()
     }
 }

@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" width="760" height="320" font-family="Helvetica, Arial, sans-serif" font-size="13">
 <rect width="760" height="320" fill="white"/>
+<path d="M60.0,58.0 L420.0,58.0 A22,22 0 0 1 420.0,102.0 L60.0,102.0 A22,22 0 0 1 60.0,58.0 Z" fill="#cf3b33" fill-opacity="0.07" stroke="#cf3b33" stroke-opacity="0.35" stroke-dasharray="3 3"/>
 <line x1="60" y1="80" x2="120" y2="80" stroke="#cf3b33" stroke-width="2"/>
 <line x1="120" y1="80" x2="180" y2="80" stroke="#cf3b33" stroke-width="2"/>
 <line x1="180" y1="80" x2="240" y2="80" stroke="#cf3b33" stroke-width="2"/>
@@ -15,7 +16,7 @@
 <circle cx="420" cy="80" r="11" fill="#cf3b33" stroke="#cf3b33" stroke-width="2"/>
 <text x="60" y="118" fill="#cf3b33" font-size="12" text-anchor="start" font-weight="normal">a lone chain: 7 blocks, 7 chain steps, width 1</text>
 <text x="60" y="136" fill="#cf3b33" font-size="12" text-anchor="start" font-weight="bold">weighs 1 / E of its work</text>
-<path d="M48,230 L262,158 L262,302 Z" fill="#2c63d6" fill-opacity="0.08" stroke="#2c63d6" stroke-opacity="0.35" stroke-dasharray="3 3"/>
+<path d="M44.0,215.0 L89.0,167.0 A22,22 0 0 1 104.0,160.0 L194.0,156.0 A22,22 0 0 1 211.6,163.6 L256.6,215.6 A22,22 0 0 1 258.4,242.0 L228.4,288.0 A22,22 0 0 1 211.0,298.0 L121.0,302.0 A22,22 0 0 1 105.9,296.9 L45.9,246.9 A22,22 0 0 1 44.0,215.0 Z" fill="#2c63d6" fill-opacity="0.08" stroke="#2c63d6" stroke-opacity="0.35" stroke-dasharray="3 3"/>
 <line x1="60" y1="230" x2="150" y2="230" stroke="#2c63d6" stroke-width="2"/>
 <line x1="150" y1="230" x2="240" y2="230" stroke="#2c63d6" stroke-width="2"/>
 <line x1="105" y1="182" x2="130" y2="230" stroke="#9aa3b2" stroke-width="1.3"/>

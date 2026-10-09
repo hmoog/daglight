@@ -6,8 +6,8 @@ use crate::network::HorizonSum;
 use crate::{MergedPerception, NetworkPerception};
 
 /// A network learned from the DAG over the finality horizon: its hash rate at the tip, as the work
-/// a block must carry, and, from what the lineage has folded, the rate it expects and the width
-/// it weighs by; its delay from merged blocks.
+/// a block must carry, and, from what the lineage has folded, the pace it turns the delay into
+/// work by and the width it weighs by; its delay from merged blocks.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LearnedNetworkPerception<W> {
     /// The work a child block must carry: the tip's recent work, per interval.
@@ -59,10 +59,6 @@ impl<W: Work> NetworkPerception<W> for LearnedNetworkPerception<W> {
 
     fn block_work(&self) -> W {
         self.block_work
-    }
-
-    fn rate(&self) -> W {
-        self.rate
     }
 
     fn delay_time(&self, protocol_parameters: &ProtocolParameters) -> u64 {
@@ -145,6 +141,11 @@ impl<W: Work> NetworkPerception<W> for LearnedNetworkPerception<W> {
 }
 
 impl<W: Work> LearnedNetworkPerception<W> {
+    /// Returns the work the network does per interval, as the lineage has folded it.
+    pub fn rate(&self) -> W {
+        self.rate
+    }
+
     /// Takes in the segment of the chain newly folded by the block of `merge`, from the height last
     /// taken in up to `folding_threshold`: its past and chain work set the rate and the width.
     /// Returns whether there was one.

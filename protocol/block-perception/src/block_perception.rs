@@ -22,6 +22,9 @@ pub struct BlockPerception<Id, W, N = LearnedNetworkPerception<W>> {
     pub past_work: W,
     /// The work of its chain, the block's included.
     pub chain_work: W,
+    /// Its blue work, the weight tips are chosen by: its chain with what it acknowledges beside it,
+    /// weighed by the parent's network as a side is, a lone chain at a fraction of its own.
+    pub blue_work: W,
     /// The block's finality point: the highest chain height stamped at least one finality horizon
     /// before the block. Nothing the block's children fold may fork off the chain below it.
     pub final_height: Height,
@@ -43,6 +46,7 @@ impl<Id: BlockId, W: Work, N: NetworkPerception<W>> BlockPerception<Id, W, N> {
             protocol_parameters,
             past_work: work,
             chain_work: work,
+            blue_work: network.weigh(work, work),
             final_height: 0,
             forks: ForksPerception::default(),
             network,
@@ -50,28 +54,27 @@ impl<Id: BlockId, W: Work, N: NetworkPerception<W>> BlockPerception<Id, W, N> {
     }
 
     /// Derives a block's perception from its `merge`: its chain from the parent's, its forks from
-    /// the parent's and the merged blocks, and the network from what the forks have closed, for the
-    /// children. Every part is measured by the parent's network.
+    /// the parent's and the merged blocks, its weight from both, and the network from what the
+    /// forks have closed, for the children. Every part is measured by the parent's network.
     pub fn derive(merge: &MergedPerception<'_, Id, W, N>) -> Self {
         let block = merge.block;
         let forks = ForksPerception::derive(merge);
+        let chain_work = merge.parent.chain_work + block.work;
         Self {
             id: block.id,
             work: block.work,
             time: block.time,
             protocol_parameters: merge.parent.protocol_parameters,
             past_work: merge.past_work(),
-            chain_work: merge.parent.chain_work + block.work,
+            chain_work,
+            blue_work: merge
+                .parent
+                .network
+                .weigh(chain_work, chain_work + forks.acknowledged()),
             final_height: merge.final_height(),
             network: N::derive(merge, forks.folding_threshold()),
             forks,
         }
-    }
-
-    /// Returns the block's blue work, the weight tips are chosen by: the work it acknowledges from
-    /// other lineages plus its own chain's, its own block's included.
-    pub fn blue_work(&self) -> W {
-        self.forks.acknowledged() + self.chain_work
     }
 
     /// Returns what the topology keeps about the block.
@@ -83,7 +86,7 @@ impl<Id: BlockId, W: Work, N: NetworkPerception<W>> BlockPerception<Id, W, N> {
             past_work: self.past_work,
             folding_threshold: self.forks.folding_threshold(),
             final_height: self.final_height,
-            blue_work: self.blue_work(),
+            blue_work: self.blue_work,
         }
     }
 }
@@ -91,8 +94,8 @@ impl<Id: BlockId, W: Work, N: NetworkPerception<W>> BlockPerception<Id, W, N> {
 /// Heavier by weight, ties to the lower hash.
 impl<Id: BlockId, W: Work, N: NetworkPerception<W>> Ord for BlockPerception<Id, W, N> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.blue_work()
-            .cmp(&other.blue_work())
+        self.blue_work
+            .cmp(&other.blue_work)
             .then_with(|| other.id.cmp(&self.id))
     }
 }

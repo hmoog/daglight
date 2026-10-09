@@ -32,7 +32,8 @@ P(B)                what every node derives for B:
 final_point(B)   = chain(B)[final_height(B)]               # below it a node never reorganises
 pruning_point(B)  = final_point(final_point(B))             # below it nothing is ever read again
 
-blue(B)   = folded + Σ_k forks[k].held + chain_work                       # the weight of a tip
+blue(B)   = weigh(N(S), chain_work, chain_work + folded + Σ_k forks[k].held)    # a tip's weight
+      # its cone of credited work, weighed as a side is: entangled in full, a lone chain at 1/E
 P(a) > P(b)  iff  blue(a) > blue(b), or equal and id(a) < id(b)           # ties to the lower hash
 margin(N) = H · N.delay_work
 ```
@@ -125,13 +126,7 @@ Decide(P, B):
 decided(P, B, k):
   above    = Σ over open forks j ≠ k of (contested + settled at j)
   rivals   = Σ_c weighed(P.forks[k].rival[c])               # 0 if no fork is open at k
-  leads    = side(P, k, above) > rivals + margin(N)
-  elapsed  = t(B) − t(chain(S)[k])
-  expected = N.rate · elapsed / interval                     # work the network should have done
-  σ        = sqrt(expected · N.block_work)                   # one std. deviation of its block count
-  s        = seen − past_work(chain(S)[k])                  # work B has seen since the fork block
-  majority = s > max(0, expected − s) + margin(N) + H · σ   # seen beats unseen by margin and H·σ
-  return leads and majority
+  return side(P, k, above) > rivals + margin(N)
 ```
 
 At `k = height(S)` the side is empty, so deciding stops there at the latest.
@@ -171,15 +166,16 @@ DropBelow(P, h):
   for each open fork k < h:  P.folded += P.forks[k].held;  remove P.forks[k]
 ```
 
-Folding converts `held` into `folded`, so `folded + Σ held` never falls along a chain, and
-`blue(B) > blue(S)` always.
+Folding converts `held` into `folded`, so `folded + Σ held` never falls along a chain, and nothing a
+block lists takes back what its lineage had. `blue(B) > blue(S)` whenever `E` holds still; only a
+change of `E`, which every child of the lineage inherits alike, can weigh a child below its parent.
 
 ## Learn: what the network teaches
 
 ```
 Learn(P, B):
   N = copy of N(S)
-  for x ∈ credited: Sample(N, missed(x), w(x))
+  for x ∈ credited, by id: Sample(N, missed(x), w(x))       # one order, however they arrived
   Sample(N, 0, w(B))                                        # B itself missed nothing
   tip_work.add(past_work(B) − past_work(S), t(B) − t(S))    # a horizon sum: decays by elapsed/F
   N.block_work = tip_work / (F / interval)                  # difficulty: the tip's recent work
@@ -208,8 +204,8 @@ so a minority cannot teach the network a lower bar. The genesis seeds `block_wor
 
 `N` is an interface, and the rules above read it the same way whatever stands behind it. The
 learned network is the default; the other implementation, `FixedNetworkPerception`, keeps the
-genesis's `block_work`, `delay` and `E` for good, with `rate = block_work` and
-`delay_work = block_work · delay / interval`, and its `Sample` and `Learn` do nothing. That
+genesis's `block_work`, `delay` and `E` for good, with `delay_work = block_work · delay / interval`,
+and its `Sample` and `Learn` do nothing. That
 separates the colouring from its estimators: the structural rules can be studied with every
 yardstick held still, by `--fixed` in the simulator and `Config::fixed()` in the measured table,
 whose `fixed*` rows pair with their learned twins.
@@ -237,13 +233,14 @@ order: for each chain block C with selected parent S, in chain order:
 
 - `derive` reads `P(S)` and the mergeset; it costs one pass over `M` and the open forks. The order
   of arrival changes nothing.
-- Honest blocks are blue: a fork closes only on a lead of `H` delays of work and a majority seen,
-  and an honest block votes within one delay of the tips.
+- Honest blocks are blue: a fork closes only on a lead of `H` delays of work, and an honest block
+  votes within one delay of the tips.
 - The mirror rule: once a lineage folds a fork, blocks from the other side join below its `τ` and
   are red to it for good; its own blocks are `settled` to the other side, recorded as evidence but
   never held. From the first fold, neither side imports the other again.
-- A lone chain weighs `1/E` of its work until it entangles, so a hidden spine cannot lead a wide
-  honest branch; a race is won or lost whole, since the leader holds all of the trailer's contested
-  work.
-- A lineage that has seen less than half the work the network is expected to have done decides
-  nothing; a stall of a whole horizon is ended by `Expire`.
+- A lone chain weighs `1/E` of its work until it entangles, as a rival and as a tip alike, so a
+  spine can neither lead a wide honest branch nor outrank it by luck; a race is won or lost whole,
+  since the leader holds all of the trailer's contested work.
+- A lineage decides from what it has seen alone. A minority partition folds its forks its own
+  way; once the majority folds them the other way, the mirror rule keeps the minority's work out
+  for good, whatever it decided. A stall of a whole horizon is ended by `Expire`.

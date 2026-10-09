@@ -53,7 +53,7 @@ impl BlockRecord {
             time,
             parents,
             work: perception.work,
-            blue_work: perception.blue_work(),
+            blue_work: perception.blue_work,
             past_work: perception.past_work,
             height: address.height,
             folding_threshold: perception.forks.folding_threshold(),

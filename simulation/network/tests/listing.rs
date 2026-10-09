@@ -1,12 +1,16 @@
-//! Listing never costs a lineage weight: what it once had foldable at a fork stays foldable, so no
-//! honest block weighs less than its selected parent, whatever heavier rival it lists.
+//! Listing never costs a lineage what it had: what it once had foldable at a fork stays foldable,
+//! so no honest block weighs less than its selected parent at the width the block was weighed by,
+//! whatever heavier rival it lists. What listing can cost is a hold not yet taken: a block whose
+//! merged blocks lift a rival past its side holds nothing there, where listing nothing it would
+//! have; about one honest block in a hundred, by a few blocks of work, and not asserted away here.
 
+use daglight_protocol_block_perception::NetworkPerception;
 use daglight_protocol_dag::DagStore;
 use daglight_protocol_node::DagHandle;
 use daglight_simulation_config::{Config, Reveal, Strategy};
 use daglight_simulation_network::Simulation;
 
-/// Runs `config` and checks every honest block against its selected parent.
+/// Runs `config` and checks every honest block against its selected parent at the same width.
 fn never_lighter_than_its_parent(config: Config) {
     let mut sim = Simulation::new(config.clone());
     sim.run();
@@ -18,14 +22,15 @@ fn never_lighter_than_its_parent(config: Config) {
             if Some(mined.miner) == attacker || store.topology().address(id).is_none() {
                 continue;
             }
-            let parent = store.block(id).selected_parent;
-            let (own, selected) = (
-                store.perception(id).blue_work(),
-                store.perception(parent).blue_work(),
+            let parent = store.perception(store.block(id).selected_parent);
+            let own = store.perception(id).blue_work;
+            let selected = parent.network.weigh(
+                parent.chain_work,
+                parent.chain_work + parent.forks.acknowledged(),
             );
             assert!(
                 own >= selected,
-                "block {id} weighs {own}, its parent {selected}"
+                "block {id} weighs {own}, its parent {selected} at the same width"
             );
             checked += 1;
         }

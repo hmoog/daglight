@@ -1,7 +1,7 @@
-//! The chain goes to the largest miner: the heaviest tip is the one with the most work in its past,
-//! and a miner's own tip always holds its own last delay of blocks, which no other tip can yet. So a
-//! pool well short of a majority mines nearly every chain block, honestly, while every block the
-//! chain merges stays blue. Any rule that chooses the heaviest past has this, GHOSTDAG included.
+//! The chain leans to the largest miner: the heaviest tip is the one with the most work in its
+//! past, and a miner's own tip always holds its own last delay of blocks, which no other tip can
+//! yet. Any rule that chooses the heaviest past has this, GHOSTDAG included; weighing by width
+//! tempers it, as that run of own blocks is a lone chain until the network entangles it.
 
 use daglight_protocol_dag::DagStore;
 use daglight_protocol_node::DagHandle;
@@ -34,23 +34,23 @@ fn network() -> Config {
 /// One of ten equal miners mines some of the chain blocks, as each of them does.
 #[test]
 fn equal_miners_share_the_chain() {
-    assert_eq!(chain_blocks_of_miner_0(network()), (48, 315));
+    assert_eq!(chain_blocks_of_miner_0(network()), (35, 291));
 }
 
-/// A pool of a fifth of the hash rate mines over half the chain blocks.
+/// A pool of a fifth of the hash rate mines nearly half the chain blocks.
 #[test]
-fn a_fifth_mines_over_half() {
-    assert_eq!(chain_blocks_of_miner_0(network().pool(0.2)), (214, 395));
+fn a_fifth_mines_nearly_half() {
+    assert_eq!(chain_blocks_of_miner_0(network().pool(0.2)), (134, 293));
 }
 
-/// A pool of 30% mines nineteen in twenty.
+/// A pool of 30% mines two in three.
 #[test]
-fn thirty_percent_mines_nineteen_in_twenty() {
-    assert_eq!(chain_blocks_of_miner_0(network().pool(0.3)), (625, 653));
+fn thirty_percent_mines_two_in_three() {
+    assert_eq!(chain_blocks_of_miner_0(network().pool(0.3)), (271, 408));
 }
 
-/// A pool of 40% mines all but a handful.
+/// A pool of 40% mines six in seven.
 #[test]
-fn forty_percent_mines_all_but_a_handful() {
-    assert_eq!(chain_blocks_of_miner_0(network().pool(0.4)), (888, 902));
+fn forty_percent_mines_six_in_seven() {
+    assert_eq!(chain_blocks_of_miner_0(network().pool(0.4)), (551, 644));
 }

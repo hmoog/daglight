@@ -1,4 +1,5 @@
 """Draws the README's figures as SVG: run `python3 docs/figures.py` from the workspace root."""
+import math
 from pathlib import Path
 
 CHAIN, BLUE, RED, GREY, AMBER, INK, MUTED = "#1b2b28", "#2c63d6", "#cf3b33", "#9aa3b2", "#d9811a", "#1b2b28", "#5a6d69"
@@ -14,6 +15,33 @@ def edge(a, b, stroke=CHAIN, width=2, dash=""):
     (x1, y1), (x2, y2) = a, b
     d = f' stroke-dasharray="{dash}"' if dash else ""
     return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{stroke}" stroke-width="{width}"{d}/>\n'
+
+def cone(points, colour, r=22, fill_opacity=0.08):
+    """A smooth outline around `points`: their convex hull, pushed out by `r`, with round corners."""
+    pts = sorted(set(points))
+    cross = lambda o, a, b: (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lower, upper = [], []
+    for q in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], q) <= 0:
+            lower.pop()
+        lower.append(q)
+    for q in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], q) <= 0:
+            upper.pop()
+        upper.append(q)
+    hull = lower[:-1] + upper[:-1]
+    d, first = "", None
+    for i, a in enumerate(hull):
+        b = hull[(i + 1) % len(hull)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        n = math.hypot(dx, dy)
+        nx, ny = dy / n * r, -dx / n * r
+        start, end = (a[0] + nx, a[1] + ny), (b[0] + nx, b[1] + ny)
+        d += f"M{start[0]:.1f},{start[1]:.1f} " if i == 0 else f"A{r},{r} 0 0 1 {start[0]:.1f},{start[1]:.1f} "
+        d += f"L{end[0]:.1f},{end[1]:.1f} "
+        first = first or start
+    d += f"A{r},{r} 0 0 1 {first[0]:.1f},{first[1]:.1f} Z"
+    return f'<path d="{d}" fill="{colour}" fill-opacity="{fill_opacity}" stroke="{colour}" stroke-opacity="0.35" stroke-dasharray="3 3"/>\n'
 
 def curve(a, b, stroke, width=1.3, dash="4 3"):
     (x1, y1), (x2, y2) = a, b
@@ -144,8 +172,8 @@ def judging():
     rival = [(kx + 70, ky + 72), (kx + 140, ky + 92), (kx + 210, ky + 104)]
     beside = [(rival[0][0] + 35, ky + 130), (rival[1][0] + 35, ky + 140)]
     # Cones.
-    b += f'<path d="M{kx+14},{ky} L{side[-1][0]+30},{ky-82} L{side[-1][0]+30},{ky+22} Z" fill="{BLUE}" fill-opacity="0.08" stroke="{BLUE}" stroke-opacity="0.35" stroke-dasharray="3 3"/>\n'
-    b += f'<path d="M{kx+8},{ky+12} L{rival[-1][0]+36},{ky+70} L{rival[-1][0]+36},{ky+160} Z" fill="{RED}" fill-opacity="0.07" stroke="{RED}" stroke-opacity="0.35" stroke-dasharray="3 3"/>\n'
+    b += cone(side + above, BLUE)
+    b += cone(rival + beside, RED, fill_opacity=0.07)
     # The side: chain above the fork, rivals recorded above it beside.
     prev = (kx, ky)
     for p in side:
@@ -182,18 +210,19 @@ def judging():
 def width():
     b = ""
     y = 80
-    for i in range(7):
-        if i:
-            b += edge((60 + (i - 1) * 60, y), (60 + i * 60, y), stroke=RED)
-    for i in range(7):
-        b += block(60 + i * 60, y, fill=RED, stroke=RED)
+    lone = [(60 + i * 60, y) for i in range(7)]
+    b += cone(lone, RED, fill_opacity=0.07)
+    for a, c in zip(lone, lone[1:]):
+        b += edge(a, c, stroke=RED)
+    for p in lone:
+        b += block(*p, fill=RED, stroke=RED)
     b += text(60, y + 38, "a lone chain: 7 blocks, 7 chain steps, width 1", fill=RED, size=12)
     b += text(60, y + 56, "weighs 1 / E of its work", fill=RED, size=12, weight="bold")
     # An entangled cone: 3 chain steps, 7 blocks.
     y2 = 230
     chain = [(60, y2), (150, y2), (240, y2)]
     others = [(105, y2 - 48), (195, y2 - 52), (120, y2 + 50), (210, y2 + 46)]
-    b += f'<path d="M{48},{y2} L{262},{y2-72} L{262},{y2+72} Z" fill="{BLUE}" fill-opacity="0.08" stroke="{BLUE}" stroke-opacity="0.35" stroke-dasharray="3 3"/>\n'
+    b += cone(chain + others, BLUE)
     for a, c in zip(chain, chain[1:]):
         b += edge(a, c, stroke=BLUE)
     for o in others:
@@ -258,7 +287,7 @@ def verdict():
             out += text(x + 12, y + 44 + k * 18, l, fill=INK, size=12)
         return out
     b += panel(520, 40, BLUE, "H judges the fork", ["side 9, rival 3: it leads", "the hidden 3 is held", "blue work: 9 + 3"])
-    b += panel(520, 230, RED, "A judges the fork", ["side 3, rival 4: it trails", "the honest 4 is evidence", "blue work: 3"])
+    b += panel(520, 230, RED, "A judges the fork", ["side 3, rival 4: it trails", "the honest 4 is evidence", "blue work: 3 / E, a lone chain"])
     return svg(760, 345, b)
 
 

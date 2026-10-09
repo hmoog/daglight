@@ -3,7 +3,8 @@
 //!
 //! Work is in tenths and the delay work is one block, so a fork folds once its side leads by more
 //! than four. The width is guessed at one and a half blocks per step, so a lone chain and a lone
-//! rival are weighed alike against each other.
+//! rival are weighed alike against each other, and a tip is weighed by the same width: a lone
+//! chain weighs two thirds of its work, a cone with a third beside its chain all of it.
 
 use daglight_protocol_dag::DagError;
 
@@ -61,7 +62,10 @@ fn the_state_is_as_drawn() {
         "F2's side at J, F1, ties F1' and F1'', and F1 has the lowest hash"
     );
     assert_eq!(f2.chain_work, 30, "J, F1 and F2");
-    assert_eq!(f2.blue_work(), 50);
+    assert_eq!(
+        f2.blue_work, 50,
+        "a cone of 50 allows 33 of chain: all 30, and 20"
+    );
     let t = d.perception(T_LAST);
     assert_eq!(
         t.forks.acknowledged(),
@@ -72,11 +76,14 @@ fn the_state_is_as_drawn() {
         t.past_work, 260,
         "the genesis, S and twenty-four chain blocks"
     );
-    // Nothing is closed yet: a block per delay, the work seen leads the work not seen by four
-    // standard deviations of its count only after about twenty-five blocks.
-    assert_eq!(t.forks.folding_threshold(), 0);
+    // The threshold trails the tip by six: at two thirds, a lone chain leads the margin of four
+    // only from six blocks up.
+    assert_eq!(t.forks.folding_threshold(), 18);
     assert_eq!(t.chain_work, 250, "the genesis and T1 to T24 in full");
-    assert_eq!(t.blue_work(), 260, "all its past");
+    assert_eq!(
+        t.blue_work, 187,
+        "a cone of 260 at the width T's folds taught, 1.47, counts 177 of its chain, and S's 10"
+    );
 }
 
 /// A longer chain outranks a lineage that has acknowledged more.
@@ -84,18 +91,22 @@ fn the_state_is_as_drawn() {
 fn the_chain_chooses_and_lists() {
     let d = build();
 
-    // The chain is selected, 26 against 5.
+    // The chain is selected, 187 against 50.
     assert!(d.perception(T_LAST) > d.perception(F2));
     assert_eq!(d.heaviest(), T_LAST);
     let virt = mine(&d, 0, d.next_block(0, 0).parents().collect());
     assert_eq!(virt.parents().collect::<Vec<_>>(), vec![T_LAST, F2]);
 
-    // The chain has closed nothing yet, so F's side is recorded at J, and the virtual, having
-    // seen enough since, closes J and the heights above, folding it with S.
+    // The chain closed J long ago, so F's side joins below the threshold and is red: in the past,
+    // never recorded or folded. S, folded at T1, is all the chain ever acknowledged.
     let v = &derive(&d, &virt).unwrap();
     assert!(v.forks.is_empty());
-    assert_eq!(v.forks.folded(), 50, "S and F's 4 at J");
-    assert_eq!(v.forks.folding_threshold(), 4);
+    assert_eq!(v.forks.folded(), 10, "S at T1; F's 4 at J are red");
+    assert_eq!(
+        v.forks.folding_threshold(),
+        19,
+        "T24 on top closes one more"
+    );
     assert_eq!(v.past_work, 310, "the chain's 26, F's 4 and its own");
 
     // No block on F's side may list the chain's tip.
@@ -133,9 +144,17 @@ fn a_child_outranks_its_parent() {
     assert!(d.perception(1) > d.perception(0));
     assert!(d.perception(3) > d.perception(1));
     assert!(d.perception(4) > d.perception(3));
-    assert_eq!(d.perception(4).blue_work(), 40, "a chain of four");
+    assert_eq!(
+        d.perception(4).blue_work,
+        26,
+        "a chain of four, alone: two thirds of 40"
+    );
 
     // 7's side at the genesis, 2 and 5, outweighs 6.
-    assert_eq!(d.perception(7).blue_work(), 50, "a chain of four, and 6");
+    assert_eq!(
+        d.perception(7).blue_work,
+        43,
+        "a cone of 50 allows 33 of its chain of 40, and 6's 10"
+    );
     assert_eq!(d.heaviest(), 7);
 }

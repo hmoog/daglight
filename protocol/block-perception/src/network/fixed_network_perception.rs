@@ -39,10 +39,6 @@ impl<W: Work> NetworkPerception<W> for FixedNetworkPerception<W> {
         self.block_work
     }
 
-    fn rate(&self) -> W {
-        self.block_work
-    }
-
     fn delay_time(&self, _protocol_parameters: &ProtocolParameters) -> u64 {
         self.delay
     }

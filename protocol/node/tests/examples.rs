@@ -2,9 +2,10 @@
 //!
 //! Work is in tenths: a block, the genesis included, is 1, `10`. The genesis guesses a delay of a
 //! fifth of a block interval, so the delay work is 0.2: a fork folds once its side leads by more
-//! than 0.8 blocks and the work seen since it leads the work not seen by as much and by four
-//! standard deviations of its count, which takes about twenty blocks where a block takes five
-//! delays. A chain block counts at once, for the rank and for the sides of the forks below it.
+//! than 0.8 blocks, and a chain nothing rivals closes every height below its parent's as it goes.
+//! Where an example needs its forks open longer, its genesis guesses a delay of a whole interval,
+//! a margin of four blocks. A chain block counts at once, for the rank and for the sides of the
+//! forks below it.
 //! Every block is mined as the network would: with the work its selected parent requires, stamped
 //! when a block a second has done the work before it, so the difficulty holds at one block. These
 //! DAGs are narrow, so the width stays at one block per step and weighing leaves a chain whole. Ids
@@ -18,14 +19,13 @@ mod common;
 
 use common::*;
 
-/// The ids of the natural fork: its common blocks, the F side and the G side by height, a block
-/// that meets both and one that folds the G side late.
+/// The ids of the natural fork: its common blocks, the F side and the G side by height, and a
+/// block that meets both.
 const A0: u32 = 0;
 const C2: u32 = 2;
 const E3: u32 = F + 3;
 const D3: u32 = G + 3;
 const H: u32 = 400;
-const K: u32 = 500;
 /// The ids of the F and the G side start here, plus the height.
 const F: u32 = 100;
 const G: u32 = 200;
@@ -77,35 +77,40 @@ fn natural_fork() {
         })
     );
     assert_eq!(f4.forks.held(), 10, "D3 foldable");
-    assert_eq!(f4.blue_work(), 60, "the chain A0 to F4, and D3");
+    assert_eq!(f4.blue_work, 60, "the chain A0 to F4, and D3");
 
     // Every block is a sample of the delay, by its share of the finality horizon's work, a step of
     // 0.006 ms here. B1, C2, E3 and F4 extend their selected parents and missed nothing: four steps
-    // down. D3 had missed E3, a whole block, more than the handshake's 0.8: withheld, as far as the
-    // delay can tell, and no sample.
+    // down. D3 had missed E3, a whole block, more than the handshake's 0.4: withheld, as far as the
+    // delay can tell, and no sample. The delay work follows the delay down at each fold, and
+    // 1.9999 is 1 in tenths: from C2's children on, the margin is 0.4 blocks.
     assert_eq!(
         f4.network.delay_time(&PROTOCOL_PARAMETERS),
         199,
         "in milliseconds, 199.98"
     );
-    assert_eq!(f4.network.delay_work(), 2);
+    assert_eq!(f4.network.delay_work(), 1);
 
-    // Nothing closes while the work seen does not lead the work not seen by four standard
-    // deviations of its count as well: a block every five delays, it takes twenty of them.
-    assert_eq!(d.perception(F + 19).forks.folding_threshold(), 0);
-    assert_eq!(d.perception(F + 20).forks.folding_threshold(), 1);
+    // A chain nothing rivals closes every height below its parent's: C2 closed A0, E3 closed B1.
+    // F4 stops at C2, where E3 alone does not lead D3 by the margin.
+    assert_eq!(d.perception(E3).forks.folding_threshold(), 2);
+    assert_eq!(f4.forks.folding_threshold(), 2);
 
-    // F22 folds C2 for good: F's chain leads D3 by far more than the margin there.
-    let f22 = d.perception(F + 22);
-    assert_eq!(f22.forks.folding_threshold(), 3, "C2 closed");
-    assert!(f22.forks.is_empty());
-    assert_eq!(f22.forks.folded(), 10, "D3 folded for good");
-    assert_eq!(f22.network.block_work(), 10, "the difficulty held");
+    // F5 folds C2 for good: E3 and F4 lead D3 by more than the margin, and F4 alone closes E3's
+    // height.
+    let f5 = d.perception(F + 5);
+    assert_eq!(f5.forks.folding_threshold(), 4, "C2 and E3's height closed");
+    assert!(f5.forks.is_empty());
+    assert_eq!(f5.forks.folded(), 10, "D3 folded for good");
+    assert_eq!(
+        d.perception(F + TOP).network.block_work(),
+        10,
+        "the difficulty held"
+    );
 
-    // The G side, seeing nothing against it and as much work as the network is known to do,
-    // folds C2 its own way a block later.
-    assert_eq!(d.perception(G + 22).forks.folding_threshold(), 2);
-    assert_eq!(d.perception(G + 23).forks.folding_threshold(), 3);
+    // The G side, seeing nothing against it, closes C2 its own way at G4, folding nothing.
+    assert_eq!(d.perception(D3).forks.folding_threshold(), 2);
+    assert_eq!(d.perception(G + 4).forks.folding_threshold(), 3);
     assert_eq!(d.perception(G + TOP).forks.acknowledged(), 0);
 
     // H on F26 folds G26: G4 to G26 join at C2, below F26's folding threshold, and are red.
@@ -128,58 +133,63 @@ fn natural_fork() {
 /// Settled work weighs against folding its fork but is never folded.
 ///
 /// ```text
-///                        +- E3 -- F4 -- F5 -- ... -- F21 -- K -- K1 -- ...
-///   A0 -- B1 -- C2 ------+                                 :
-///                        +- D3 - G4 - G5 - ... - G20 . . . .      (K folds G20)
+///                        +- E3 -- F4 -- F5 -- F6 -- F7 -- F8 -- F9 -- ... -- F14
+///   A0 -- B1 -- C2 ------+        :     :     :     :     :     :
+///                        +- D3 .. : G4 .: G5 .: G6 .: G7 .: G8 .:      (F4 folds D3, F5 G4, ...)
 /// ```
 ///
-/// The genesis knows a block a second, and the F side mines one: F3 at 3 s, F21 at 21 s. The G
-/// side mines two: D3 at 3 s, then half a second apart, G20 at 11.5 s. K at 21.5 s and on, a second
-/// apart. A0 is the genesis, 0; B1=1 C2=2, the F side 100 plus its height, the G side 200 plus
-/// its, K=500 and on.
+/// The genesis guesses a delay of a block interval: a margin of four blocks. Both sides mine a
+/// block a second, E3 and D3 at 3 s; the F side folds the G block of the second before, the G side
+/// lists nothing and stops at G8. A0 is the genesis, 0; B1=1 C2=2, the F side 100 plus its
+/// height, the G side 200 plus its.
 #[test]
 fn settled_work_is_never_folded() {
-    let mut d = dag(200, 1_000_000);
+    let mut d = dag(1000, 1_000_000);
     for (id, parent, time) in [(1, A0, 1000), (C2, 1, 2000), (E3, C2, 3000), (D3, C2, 3000)] {
         d.add_block(mine_at(&d, id, vec![parent], time)).unwrap();
     }
-    for h in 4..=21 {
-        d.add_block(mine_at(&d, F + h, vec![F + h - 1], u64::from(h) * 1000))
-            .unwrap();
-    }
-    for h in 4..=20 {
-        let time = 1500 + u64::from(h) * 500;
-        d.add_block(mine_at(&d, G + h, vec![G + h - 1], time))
+    for h in 4..=14 {
+        let time = u64::from(h) * 1000;
+        if h <= 8 {
+            d.add_block(mine_at(&d, G + h, vec![G + h - 1], time))
+                .unwrap();
+        }
+        let g = G + (h - 1).min(8);
+        d.add_block(mine_at(&d, F + h, vec![F + h - 1, g], time))
             .unwrap();
     }
 
-    // The G side sees twice the work the network is known to do and closes C2 its own way, once
-    // the work it has seen leads by four standard deviations of its count.
-    assert_eq!(d.perception(G + 13).forks.folding_threshold(), 0);
-    assert_eq!(d.perception(G + 14).forks.folding_threshold(), 3);
+    // The G side, seeing nothing against it, closes C2 its own way at G7: G7 and G8 are settled
+    // to the F side, D3 to G6 contested.
+    assert_eq!(d.perception(G + 6).forks.folding_threshold(), 1);
+    assert_eq!(d.perception(G + 7).forks.folding_threshold(), 3);
 
-    // K on F21 folds G20, stamped 10 s before K, 6 s later than honest blocks come. D3 to G13 are
-    // contested; G14 on have closed C2 themselves and are settled. K's side at C2, E3 to F21, is 19
-    // blocks against all 18 behind D3, settled included, and leads by more than the margin of 0.8;
-    // the work it has seen since C2 is far ahead of the work it has not. It folds C2 at once, and
-    // only the contested work with it.
-    d.add_block(mine_at(&d, K, vec![F + 21, G + 20], 21_500))
-        .unwrap();
-    let k = d.perception(K);
-    assert!(k.forks.is_empty());
+    // By F12 the F side has recorded all of them at C2 and leads all six, so the contested four
+    // are held; the settled two weigh against the fold, which the lead is short of.
+    let f12 = d.perception(F + 12);
+    let rivals = f12.forks.get(2).expect("C2 open");
+    assert_eq!(rivals.contested(), 40, "D3 to G6");
+    assert_eq!(rivals.settled(), 20, "G7 and G8");
+    assert_eq!(f12.forks.held(), 40, "the contested work, led");
+    assert_eq!(f12.forks.folding_threshold(), 2);
+
+    // By F14 the side, E3 to F13, leads all six by more than the margin and has folded C2: the
+    // contested work only.
+    let f14 = d.perception(F + 14);
+    assert!(f14.forks.is_empty());
     assert_eq!(
-        k.forks.folded(),
-        110,
-        "G14 to G20 weighed against folding and stay evidence"
+        f14.forks.folded(),
+        40,
+        "G7 and G8 weighed against folding and stay evidence"
     );
 }
 
-/// A lone lineage closes nothing on a few blocks, and joins below a chain that has closed.
+/// A lone lineage closes as it goes, and joins below a chain that has closed.
 ///
 /// ```text
 ///        +- H1 -- H2 -- H3 -- ... -- H24 -- N     (N folds X5)
 ///   J ---+  :
-///        +- X1 -- X2 -- X3 -- X4 -- X5 . . .      (M on H3 folds X3)
+///        +- X1 -- X2 -- X3 -- X4 -- X5 . . .      (M on H1 folds X1)
 /// ```
 ///
 /// Each lineage mines a block a second. J is the genesis, 0; H1..H24=1..24 X1..X5=31..35 M=40
@@ -205,16 +215,9 @@ fn hidden_lineage() {
         d.add_block(mine(&d, x, vec![if x == X1 { J } else { x - 1 }]))
             .unwrap();
     }
-    assert_eq!(
-        d.perception(X5).forks.folding_threshold(),
-        0,
-        "five blocks are too few for the work seen to lead by four standard deviations"
-    );
-    assert_eq!(
-        d.perception(H24).forks.folding_threshold(),
-        4,
-        "twenty blocks are enough"
-    );
+    // Each lineage, alone as it is, closes every height below its parent's as it goes.
+    assert_eq!(d.perception(X5).forks.folding_threshold(), 4);
+    assert_eq!(d.perception(H24).forks.folding_threshold(), 23);
 
     // X1 and H1 both weigh the genesis and themselves, and H1 has the lower hash, so a block on X1
     // may not list it.
@@ -226,19 +229,25 @@ fn hidden_lineage() {
         }
     );
 
-    // M on H3 folds X3: both weigh four blocks, and H3 has the lower hash. X1 to X3 are all
-    // contested, and H3's side at J, H1 to H3, ties them: H1's lower hash wins.
-    let m = derive(&d, &mine(&d, M, vec![H3, X3])).unwrap();
+    // M on H1 folds X1: both weigh two blocks, and H1 has the lower hash. H1 has closed nothing,
+    // so X1 is recorded at J, and H1 alone ties it there: the lower hash wins.
+    let m = derive(&d, &mine(&d, M, vec![H1, X1])).unwrap();
     assert_eq!(
         m.forks.get(0).and_then(|r| r.rival(X1)),
         Some(&Rival {
-            contested: 30,
+            contested: 10,
             settled: 0,
-            chain: 30
+            chain: 10
         })
     );
-    assert_eq!(m.forks.held(), 30, "3 against 3");
+    assert_eq!(m.forks.held(), 10, "1 against 1");
     assert_eq!(m.forks.folding_threshold(), 0);
+
+    // On H3 already, X3 would join below the threshold, red.
+    assert_eq!(d.perception(H3).forks.folding_threshold(), 2);
+    let m = derive(&d, &mine(&d, M, vec![H3, X3])).unwrap();
+    assert!(m.forks.get(0).is_none());
+    assert_eq!(m.forks.acknowledged(), 0);
 
     // N on H24 folds X5, but it joins at J, below H24's folding threshold, and is red.
     let n = derive(&d, &mine(&d, N, vec![H24, X5])).unwrap();
@@ -274,7 +283,8 @@ fn redundant_parents_need_no_rule() {
 ///   +---- E . . . . . .:
 /// ```
 ///
-/// G=0 A=1 B=2 C=3 E=4 T=5.
+/// G=0 A=1 B=2 C=3 E=4 T=5. The genesis guesses a delay of a block interval, so that B has not
+/// closed G's height when T comes.
 #[test]
 fn entangled_work_supports_at_once() {
     const G: u32 = 0;
@@ -283,7 +293,7 @@ fn entangled_work_supports_at_once() {
     const C: u32 = 3;
     const E: u32 = 4;
     const T: u32 = 5;
-    let mut d = dag(200, 1_000_000);
+    let mut d = dag(1000, 1_000_000);
     for (id, parent) in [(A, G), (E, G), (B, A), (C, A)] {
         d.add_block(mine(&d, id, vec![parent])).unwrap();
     }
@@ -303,14 +313,15 @@ fn entangled_work_supports_at_once() {
     // At A, C ties B, and B has the lower hash. At G, A and B are on the side, and C above the fork
     // supports it: 3 against E's 1.
     assert_eq!(t.forks.held(), 20, "C and E foldable");
-    assert_eq!(t.blue_work(), 60, "the chain G, A, B and T, with C and E");
+    assert_eq!(t.blue_work, 60, "the chain G, A, B and T, with C and E");
 
     // Without C, A and B alone outweigh E at G.
     let alone = derive(&d, &mine(&d, T, vec![B, E])).unwrap();
     assert_eq!(alone.forks.held(), 10);
 }
 
-/// A lineage that sees less than half the work the network is known to do closes nothing.
+/// A lineage that sees less than half the work the network is known to do closes all the same, as
+/// nothing it sees rivals its chain; to the majority, which closes its own way, it is red.
 ///
 /// ```text
 ///        +- H1 -- H2 -- H3 -- ... -- H30 -- N       (N folds X15)
@@ -322,7 +333,7 @@ fn entangled_work_supports_at_once() {
 /// half the hash rate, each block in the time half the network mines its work. J is the genesis,
 /// 0; H1..H30=1..30 X1..X15=41..55 N=60.
 #[test]
-fn a_minority_closes_nothing() {
+fn a_minority_closes_on_its_own() {
     const J: u32 = 0;
     const H30: u32 = 30;
     const X1: u32 = 41;
@@ -343,26 +354,17 @@ fn a_minority_closes_nothing() {
     let x15 = d.perception(X15);
     assert_eq!(
         x15.forks.folding_threshold(),
-        0,
-        "X saw half the work: it closes nothing"
+        14,
+        "X saw half the work and nothing against it: it closes as it goes"
     );
-    // Its difficulty follows the half it sees only over the finality horizon, 6000 intervals:
-    // fifteen blocks two seconds apart take it from 60000 to about 59850 of work, still 10 a
-    // block. Its expected rate learns from what it has folded, which is nothing.
-    assert_eq!(
-        x15.network.block_work(),
-        10,
-        "fifteen blocks barely move it"
-    );
-    assert_eq!(
-        x15.network.rate(),
-        10,
-        "the network's, as it last folded it"
-    );
+    // Its difficulty and its pace follow the half it sees only over the finality horizon, 300
+    // intervals: fifteen blocks two seconds apart barely move either from 10 a block.
+    assert_eq!(x15.network.block_work(), 10);
+    assert_eq!(x15.network.rate(), 10);
     assert_eq!(
         d.perception(H30).forks.folding_threshold(),
-        10,
-        "H sees all there is and closes"
+        29,
+        "H sees all there is and closes as it goes"
     );
 
     // N on H30 folds X15 at 31 s: X joins at J, below H30's folding threshold, and is red.

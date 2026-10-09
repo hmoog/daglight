@@ -318,7 +318,7 @@ impl Attacker {
         node.dag().with(|dag| {
             dag.merge(block)
                 .ok()
-                .map(|merge| BlockPerception::derive(&merge).blue_work())
+                .map(|merge| BlockPerception::derive(&merge).blue_work)
         })
     }
 

@@ -15,6 +15,6 @@ pub struct PerceptionSummary<W> {
     pub folding_threshold: Height,
     /// The finality point on its chain: nothing its children fold may fork off below it.
     pub final_height: Height,
-    /// Its blue work, the weight tips are chosen by: acknowledged work plus the counted chain.
+    /// Its blue work, the weight tips are chosen by: its cone of credited work, weighed.
     pub blue_work: W,
 }

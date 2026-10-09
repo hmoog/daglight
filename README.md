@@ -13,7 +13,7 @@ DAGLight tracks the majority cluster to find `k`. Where DAGKnight raises `k` unt
 conflict holds the majority of the work on top, DAGLight watches each conflict until one side has
 clearly won, reads honest and dishonest, blue and red, off that convergence, and learns the width
 that `k` stood for from what has already converged. A parameter to search for becomes a measurement
-to take, one that scales the verdict and never decides it.
+to take, one that scales the verdict and the choice of tip, and decides neither.
 
 A proof-of-work ledger is a vote that never ends: every block votes for its whole past, and the
 heaviest history wins. In a block DAG a block still votes for one history, the chain of its selected
@@ -81,15 +81,17 @@ Only the rival's work folds. The side's work is the chain itself, and the chain 
 block as chain work; the sides of different forks overlap, as the chain above height 2 contains the
 chain above height 4, so they are never summed.
 
-Far enough ahead means two things. The side leads all the rival work recorded at the fork, taken
-together, by a **margin**, four network delays of work: a smaller lead could still be reversed by
-honest blocks already mined and on their way. And `B` has seen the **majority**: the work it has
-seen since the fork outweighs the work the network is expected to have done in that time but `B` has
-not seen, by the margin and by four standard deviations of the block count. The expected work is the
-learned pace of the network over the time between the fork's stamp and `B`'s. A lead alone could be
-`B`'s own view, inside a partition or a withheld branch; a lead the majority has seen is the
-network's. A decision binds the lineage that made it, not the network: if the network builds
-elsewhere, the decision dies with the lineage. The majority test is what makes that rare.
+Far enough ahead means one thing: the side leads all the rival work recorded at the fork, taken
+together, by a **margin**, four network delays of work. A smaller lead could still be reversed by
+honest blocks already mined and on their way; a larger one cannot, not by anything honest. The lead
+is `B`'s own view, and a decision binds the lineage that made it, not the network: a minority, in a
+partition or a withheld branch, folds its forks its own way, the majority folds them the other way
+by the same rule, and from then on neither side imports the other. The minority's work was lost to
+the majority the moment the majority folded, whatever the minority had decided. The one cost lies in
+the window where the minority has folded and the majority has not: the minority's blocks are then
+settled to the majority, counted against its side and never held, and a lone chain that keeps mining
+leaves the majority in a race with it, which *Wide, not long* and *Measured* below take up. No
+estimate of what the network should have done enters the verdict, only what the lineage has seen.
 
 Decisions are inherited. Every block built on `B` takes `B`'s folded number and threshold as they
 are and judges only the window above. Work from a lineage that has decided a fork against `B`'s side
@@ -101,11 +103,10 @@ ever counts the other's work again. To the one that folded, the other's blocks a
 below its threshold; to the other, the folder's blocks are settled. The sealing is mutual from the
 first fold, whether or not the other side ever decides the fork its own way.
 
-Deciding can stall. When the work a lineage expects stops showing up, say because half the hash rate
-left, no block sees a majority, and nothing is decided. That is the right response, since from
-inside a lineage a vanished half and a hidden half look the same, and it costs only the window,
-which grows meanwhile, and the judging that reads it whole in every block: late arrivals stay blue,
-held work counts as folded work does, and tip choice goes on. One case needs a way out of it. If deciding stalls for a whole finality horizon, the
+Deciding can stall. While the sides of a fork stay within the margin of each other, nothing is
+decided, and that costs only the window, which grows meanwhile, and the judging that reads it whole
+in every block: late arrivals stay blue, held work counts as folded work does, and tip choice goes
+on. One case needs a way out of it. If deciding stalls for a whole finality horizon, the
 threshold is forced up through the forks older than the horizon, closing each as judged while the
 side leads every rival there outright. A fork the side does not lead stays open: the lineage has
 lost it.
@@ -122,13 +123,13 @@ well. A block merged at or above the threshold votes on a fork still open, and i
 Honest blocks are blue, because an honest block votes within one network delay of the tips, and a
 fork closes only on a lead of four delays of work, which takes at least four delays to build. That
 holds up under attack: in the simulator, against attackers of up to 49% of the hash rate hiding,
-harvesting, balancing and revealing on a timer, honest work turns red only in the races forced by
-periodic reveals near 50%, or while a delay the genesis guessed far too short is still being
-learned, and then at most half a percent of it. In the setting `B` perceives, blue
-and red are as close as it gets to honest and dishonest: a blue block voted while the question was
-open, as an honest miner does; a red block voted on a question already decided, which is what a
-withheld block looks like when it finally arrives. Blue is what may be imported. How much of it
-counts is the verdict's call, the judgement of the open forks that comes next.
+harvesting, balancing and revealing on a timer, honest work turns red only while a delay the genesis
+guessed far too short is still being learned, under one percent of it, and in one race at one block
+a second, where four delays of margin are four blocks; *Measured* below has both. In the setting `B`
+perceives, blue and red are as close as it gets to honest and dishonest: a blue block voted while
+the question was open, as an honest miner does; a red block voted on a question already decided,
+which is what a withheld block looks like when it finally arrives. Blue is what may be imported. How
+much of it counts is the verdict's call, the judgement of the open forks that comes next.
 
 ## Blue work
 
@@ -156,16 +157,26 @@ rival's work, and so would `C`: every newest block would win the fork in its own
 lineages merging each other would never agree. Reading only the past, both see three against three,
 and both break the tie the same way, by the lower hash of the same two blocks above the fork. The
 same holds for deciding: no block closes a fork with its own work. And because the verdict never
-counts `B`'s work, `B`'s blue work is its parent's and more: a child always outweighs its parent.
+counts `B`'s work, `B`'s blue work is its parent's and more: nothing a block lists can cost it what
+its lineage had, so a child outweighs its parent. Listing can cost a hold not yet taken: a block
+whose merged blocks lift a rival past its side holds nothing there, where listing less it would have
+held the rival as it stood; about one honest block in a hundred in the simulator, by a few blocks of
+work, and the one known place where a miner gains by listing a tip a block late.
 
 ```
-blue work = folded + held + the block's own chain work
+blue work = weigh(chain work, chain work + folded + held)
 ```
+
+The cone of credited work is weighed as a side is, by the width the network has shown: an entangled
+tip counts all of it, a lone chain a fraction of its own. Only a change of that width, learned from
+decided history, can weigh a child below its parent, and it reaches every child of the lineage
+alike, whatever it lists.
 
 A node builds on the tip with the most blue work, ties to the lower hash, and merges every other tip
 the rules admit. One of those rules matters here: the selected parent must be the heaviest parent a
 block lists, so a block cannot extend a light chain and merge a heavier one beside it. Choosing a
-tip reads blue work alone; stamps enter only the majority test, as the time elapsed since a fork.
+tip reads blue work alone, and no verdict reads a stamp; stamps place the finality point and set
+the difficulty.
 
 ## Winning a race
 
@@ -178,7 +189,7 @@ is its own side plus the rival's, the trailer's is its own side alone, and the g
 the leader's whole side, not the difference. One won race imports everything contested at once. A
 balancer can still flip the leader by feeding the trailer past it, but every flip moves all of the
 honest work along, and nothing it does divides it. In the simulator a 45% balancer that shows each
-half of the network its favoured side first wins half the chain and turns no honest work red.
+half of the network its favoured side first wins a third of the chain and turns no honest work red.
 
 The same cliff is why honest tips agree quickly, and why we suspect the engine converges faster than
 DAGKnight. There, how much of another lineage's work a block may import is a static rule, and two
@@ -217,10 +228,11 @@ red is final along a chain. In the hidden record the honest work it merges is ev
 hidden side trails, and settled once it comes from honest blocks built after the decision; either
 way it is never held, and settled work also bars the forced closing at the horizon. Nothing the
 attacker merges can add to its blue work again. It is left with its own work against all of the
-network's, and the only way back is to outweigh the honest chain with that alone, the majority
-attack every proof-of-work chain is open to. What remains a matter of chance is only the window
-before the fold, four delays of margin and a majority seen, and in that window the verdict is what a
-spine cannot lead.
+network's, and the only way back is to outweigh the honest tip with that alone, the majority attack
+every proof-of-work chain is open to; a lone chain cannot even mount it, since weighed as a tip it
+needs `E` times the honest work, and a private DAG as wide as the network needs the hash rate for
+it. What remains a matter of chance is only the window before the fold, four delays of margin, and
+in that window the verdict is what a spine cannot lead.
 
 ## Wide, not long
 
@@ -251,11 +263,18 @@ its work. An honest cone is as wide as the network once it is a delay old, so it
 a younger cone is, on either side alike. A spine is discounted until it entangles like the rest of
 the network, which it cannot do while it hides.
 
+A tip is weighed the same way: blue work is the cone of credited work, the chain with what it
+acknowledges beside it. Weighed raw, the verdict and the choice of tip disagreed about a spine: once
+the honest lineage had folded the spine's fork, the spine's further blocks were red to it and
+counted for nothing, while the spine's own tip counted every one of them, and a 49% spine outranked
+the honest tip whenever chance put it ahead for a moment, a reorganisation of forty delays in one
+simulated seed of ten. Weighed as a tip, a spine needs `E` times the honest work to outrank it.
+
 ![A lone chain against an entangled cone](docs/width.svg)
 
-A hidden chain therefore cannot lead a wide honest branch, cannot claim the branch's work, and is
-merged as evidence for the side that was already ahead once it is revealed. `E` is the perceived
-`k`: not a bound on anticones, but the width the honest network has shown.
+A hidden chain therefore cannot lead a wide honest branch, cannot claim the branch's work, cannot
+outrank its tip, and is merged as evidence for the side that was already ahead once it is revealed.
+`E` is the perceived `k`: not a bound on anticones, but the width the honest network has shown.
 
 ## What the network teaches
 
@@ -314,26 +333,27 @@ Aggregate the perceptions, and let the winners fold the losers in. Every block i
 record of the open conflicts along its chain and adds what it merges, so it knows exactly how much
 work stands behind each side of each conflict. At every conflict it asks whether its side leads. The
 side that leads takes the other side's work as its own, held while the conflict is open and folded
-into one number once the lead is decisive and the majority has seen it; the side that trails takes
-nothing, and keeps the leader's work only as evidence. Blue is what still votes on an open conflict,
-red what votes on a decided one. Around that core stand four guards: a block's own work is sealed
-after it judges, so the record only grows and every child outweighs its parent; the width learned
-from decided history keeps a lone spine from ever leading an entangled branch; the mirror rule keeps
-lineages that vouch for different pasts from ever importing each other, from the first fold on; and
-the finality horizon ends any stalemate and bounds what a node must keep. Nothing is swept, and
-nothing is re-coloured.
+into one number once the lead is decisive; the side that trails takes nothing, and keeps the
+leader's work only as evidence. Blue is what still votes on an open conflict, red what votes on a
+decided one. Around that core stand four guards: a block's own work is sealed after it judges, so
+the record only grows and listing never costs a child what it had; the width learned from decided
+history keeps a lone spine from leading an entangled branch or outranking its tip; the mirror rule
+keeps lineages that vouch for different pasts from ever importing each other, from the first fold
+on; and the finality horizon ends any stalemate and bounds what a node must keep. Nothing is swept,
+and nothing is re-coloured.
 
 On every mechanism the two engines can be compared on, the colouring, the credit, the import and the
 listing of parents, DAGLight is the simpler one and at least as good, and where they differ in kind,
 in sealing off a minority and in making the import itself a race, it looks to do better; no case is
 known in which DAGKnight's search would decide better or converge faster. What DAGLight lacks is
-DAGKnight's formal footing. Its colouring reads stamps in the majority test and learns its
-yardsticks from history, an attack surface a `k`-colouring does not have, and its convergence proof
-is still owed, and the simulator's attackers withhold, harvest and balance: none yet aims at the
-yardsticks or at the clock, and every honest clock agrees. The costs that can be measured are
-bounded: stamps buy no weight, which the simulator checks with attackers stamping at half and at
-double pace, and in no measured case does more than half a percent of honest work turn red. The
-comparison of convergence speed is a suspicion, not a measurement.
+DAGKnight's formal footing. Its colouring learns its yardsticks from history and reads stamps at the
+horizon, an attack surface a `k`-colouring does not have, and its convergence proof is still owed,
+and the simulator's attackers withhold, harvest and balance: none yet aims at the yardsticks or at
+the clock, and every honest clock agrees. The costs that can be measured are bounded: stamps buy no
+weight, which the simulator checks with attackers stamping at half and at double pace; honest work
+turns red in two measured cases, under one percent while a wrong guess of the delay is learned and
+nine percent in one race at one block a second. The comparison of convergence speed is a suspicion,
+not a measurement.
 
 ## In the code
 
@@ -357,33 +377,36 @@ node.follow();                                              // record updates
 node.add_block(Block::new(1, 0, vec![], 10, 1000))?;        // id, selected parent, other parents, work, time
 let next = node.next_block(2, 2000);                        // on the best tip, merging the others
 let perception = node.add_block(next)?;                     // what every node derives for it
-let blue_work = perception.blue_work();
+let blue_work = perception.blue_work;
 let updates = node.updates();                               // reorgs and newly sequenced blocks
 node.prune(0);                                              // forget what can never matter again
 ```
 
 ## Measured
 
-The result that matters is that honest work stays blue. The simulator runs ten honest miners at
+The result that matters is how much honest work stays blue. The simulator runs ten honest miners at
 twenty blocks a second with a one-second delay against attackers of up to 49%: public spines,
 withholders revealing when ahead or on a timer, harvesters that merge into a private chain every
 honest block it may list, greedy miners, private DAGs, and balancers that show each half of the
-network its favoured side first. In 140 measured cases honest work turns red in two situations
-only, and never more than half a percent of it. Attackers of 40% to 49% revealing every ten or
-twenty seconds force a race at each reveal, and the honest blocks mined onto the revealed branch in
-the moment before it loses turn red: at most 0.51% of honest work, with reorganisations of up to
-ten delays. And a genesis that guesses the delay at a third of the truth leaves the margin shorter
-than the blocks in flight, 0.34% of honest work in a minute, until the delay is learned, which
-takes horizons. Everywhere else the number is zero, and honest forks close in about eight seconds.
+network its favoured side first. In 140 measured cases honest work turns red in two. A genesis that
+guesses the delay at a third of the truth leaves the margin shorter than the blocks in flight, 0.93%
+of honest work in a minute, until the delay is learned, which takes horizons. And at one block a
+second, where four delays of margin are four blocks, a public spine of 45%, started as the hash rate
+doubles, wins its race in one seed of four: its lineage folds its own heights as it goes, its blocks
+are settled to the honest side from then on, which can neither credit them nor close the fork, and
+when chance puts the spine ahead the honest miners follow it below its threshold, 9.2% of honest
+work. Everywhere else the number is zero, no honest miner reverts a height below its own folding
+threshold, no reorganisation exceeds three delays, and honest forks close in about seven seconds.
 Every case, with its exact numbers, is a test in `simulation/metrics/tests/table.rs`.
 
-The chain itself goes to the largest miner well short of a majority: an honest pool of 20% mines
-over half the chain blocks, one of 30% nineteen in twenty, and a harvester takes the whole chain
-from 40%, since a miner's own tip always holds its own last delay of blocks, which no other tip can
-yet. Any rule that chooses the heaviest past has this, GHOSTDAG included. It costs no honest work,
-as every block the chain merges stays blue, and it would matter only if a chain block were given
-something every blue block is not; nothing here does, and a DAG that counts every block alike is
-what spares a miner the pool in the first place. The pools are measured in
+The chain itself leans to the largest miner: an honest pool of 20% mines nearly half the chain
+blocks, one of 30% two in three and one of 40% six in seven, since a miner's own tip always holds
+its own last delay of blocks, which no other tip can yet. Weighing tips by width tempers it, since
+that run of own blocks is a lone chain until the network entangles it, and keeps a harvester from
+taking the whole chain. Any rule that chooses the heaviest past has this, GHOSTDAG included. It
+costs no honest work, as every block the chain merges stays blue, and it would matter only if a
+chain block were given something every blue block is not; nothing here does, and a DAG that counts
+every block alike is what spares a miner the pool in the first place. The pools are measured in
 `simulation/network/tests/chain.rs`.
 
 ## Running
